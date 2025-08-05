@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use Grazulex\LaravelTurbomaker\LaravelTurbomakerServiceProvider;
+use Grazulex\LaravelMultiPersona\LaravelMultiPersonaServiceProvider;
 use Orchestra\Testbench\TestCase;
 
 uses(TestCase::class)->in('Feature', 'Unit');
 
 // Configure the package for testing
 uses()->beforeEach(function (): void {
-    $this->app->register(LaravelTurbomakerServiceProvider::class);
+    $this->app->register(LaravelMultiPersonaServiceProvider::class);
 })->in('Feature', 'Unit');
 
 // Define test groups for migration

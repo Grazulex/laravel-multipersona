@@ -17,7 +17,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         // Execute migration if needed
-        // $this->artisan('migrate', ['--database' => 'testing']);
+        $this->artisan('migrate', ['--database' => 'testing']);
     }
 
     final public function debugToFile(string $content, string $context = ''): void
@@ -29,8 +29,8 @@ abstract class TestCase extends Orchestra
 
     protected function getEnvironmentSetUp($app): void
     {
-        // Setup Turbomaker specific testing environment
-        $app['config']->set('turbomaker.enabled', true);
+        // Setup MultiPersona specific testing environment
+        $app['config']->set('multipersona.user_model', 'App\Models\User');
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
             'driver' => 'sqlite',
@@ -40,32 +40,11 @@ abstract class TestCase extends Orchestra
 
         // Use array cache for testing to avoid database cache issues
         $app['config']->set('cache.default', 'array');
+    }
 
-        // Disable schema cache for testing
-        $app['config']->set('turbomaker.schemas.cache_enabled', false);
-
-        // Create necessary directories for testing
-        $directories = [
-            $app->basePath('app/Models'),
-            $app->basePath('app/Http/Controllers'),
-            $app->basePath('app/Http/Controllers/Api'),
-            $app->basePath('app/Http/Requests'),
-            $app->basePath('app/Http/Resources'),
-            $app->basePath('app/Policies'),
-            $app->basePath('database/factories'),
-            $app->basePath('database/seeders'),
-            $app->basePath('database/migrations'),
-            $app->basePath('tests/Feature'),
-            $app->basePath('tests/Unit'),
-            $app->basePath('resources/views'),
-            $app->basePath('resources/schemas'),
-        ];
-
-        foreach ($directories as $directory) {
-            if (! is_dir($directory)) {
-                mkdir($directory, 0755, true);
-            }
-        }
+    protected function defineDatabaseMigrations(): void
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 
     protected function getPackageProviders($app)

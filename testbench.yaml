@@ -2,4 +2,4 @@ workbench:
   discovers:
     - commands: true
 providers:
-  - Grazulex\LaravelTurbomaker\LaravelTurbomakerServiceProvider
+  - Grazulex\LaravelMultiPersona\LaravelMultiPersonaServiceProvider

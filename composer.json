@@ -37,14 +37,18 @@
     "autoload": {
         "psr-4": {
             "Grazulex\\LaravelMultiPersona\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/",
             "Workbench\\Database\\Factories\\": "workbench/database/factories/",
-            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/",
+            "Grazulex\\LaravelMultiPersona\\Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {

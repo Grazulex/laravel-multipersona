@@ -5,4 +5,9 @@ parameters:
         - src
     bootstrapFiles:
         - vendor/autoload.php
+    
+    ignoreErrors:
+        - 
+            message: '#Trait .* is used zero times and is not analysed#'
+            path: src/Traits/*
 
