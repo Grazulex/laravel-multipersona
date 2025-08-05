@@ -56,6 +56,9 @@ trait HasPersonas
         // Activate the selected persona
         $persona->activate();
 
+        // Also set it as active in the PersonaManager for consistency
+        app('multipersona')->setActive($persona);
+
         return true;
     }
 

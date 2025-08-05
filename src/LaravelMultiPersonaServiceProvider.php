@@ -6,6 +6,7 @@ namespace Grazulex\LaravelMultiPersona;
 
 use Grazulex\LaravelMultiPersona\Contracts\PersonaInterface;
 use Grazulex\LaravelMultiPersona\Services\PersonaManager;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\ServiceProvider;
 
 class LaravelMultiPersonaServiceProvider extends ServiceProvider
@@ -17,8 +18,13 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
             'multipersona'
         );
 
-        $this->app->singleton(PersonaInterface::class, PersonaManager::class);
-        $this->app->singleton('multipersona', PersonaManager::class);
+        $this->app->singleton(PersonaManager::class);
+        $this->app->singleton('multipersona', function (Container $app) {
+            return $app[PersonaManager::class];
+        });
+        $this->app->singleton(PersonaInterface::class, function (Container $app) {
+            return $app[PersonaManager::class];
+        });
     }
 
     public function boot(): void

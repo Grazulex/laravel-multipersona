@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Grazulex\LaravelMultiPersona\Services;
 
 use Grazulex\LaravelMultiPersona\Contracts\PersonaInterface;
+use Grazulex\LaravelMultiPersona\Events\PersonaActivated;
+use Grazulex\LaravelMultiPersona\Events\PersonaDeactivated;
+use Grazulex\LaravelMultiPersona\Events\PersonaSwitched;
 use Grazulex\LaravelMultiPersona\Models\Persona;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -47,8 +50,20 @@ class PersonaManager
             throw new InvalidArgumentException('Persona not found');
         }
 
+        // Get the previous persona for event
+        $previousPersona = $this->currentPersona;
+        $user = Auth::user();
+
+        // Set the new persona
         $this->currentPersona = $persona;
         Session::put('active_persona_id', $persona->getId());
+
+        // Fire events
+        PersonaActivated::dispatch($persona, $user, ['method' => 'setActive']);
+
+        if ($previousPersona instanceof PersonaInterface) {
+            PersonaSwitched::dispatch($persona, $previousPersona, $user, ['method' => 'setActive']);
+        }
 
         return $this;
     }
@@ -58,8 +73,16 @@ class PersonaManager
      */
     public function clear(): self
     {
+        $previousPersona = $this->currentPersona;
+        $user = Auth::user();
+
         $this->currentPersona = null;
         Session::forget('active_persona_id');
+
+        // Fire deactivation event if there was an active persona
+        if ($previousPersona instanceof PersonaInterface) {
+            PersonaDeactivated::dispatch($previousPersona, $user, ['method' => 'clear']);
+        }
 
         return $this;
     }

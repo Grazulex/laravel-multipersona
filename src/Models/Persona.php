@@ -94,11 +94,13 @@ class Persona extends Model implements PersonaInterface
     }
 
     /**
-     * Check if this persona is active
+     * Check if this persona is currently active in the session
      */
     public function isActive(): bool
     {
-        return $this->is_active;
+        $currentPersona = app('multipersona')->current();
+
+        return $currentPersona !== null && $currentPersona->getId() === $this->getId();
     }
 
     /**
