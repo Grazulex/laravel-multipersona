@@ -1,15 +1,15 @@
 # Laravel MultiPersona
 
-<img src="new_logo.png" alt="Laravel TurboMaker" width="200">
+<img src="new_logo.png" alt="Laravel MultiPersona" width="200">
 
 **Laravel MultiPersona** is a lightweight context-layer system for Laravel users.  
 
-[![Latest Version](https://img.shields.io/packagist/v/grazulex/laravel-turbomaker.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-turbomaker)
-[![Total Downloads](https://img.shields.io/packagist/dt/grazulex/laravel-turbomaker.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-turbomaker)
-[![License](https://img.shields.io/github/license/grazulex/laravel-turbomaker.svg?style=flat-square)](https://github.com/Grazulex/laravel-turbomaker/blob/main/LICENSE.md)
-[![PHP Version](https://img.shields.io/packagist/php-v/grazulex/laravel-turbomaker.svg?style=flat-square)](https://php.net/)
+[![Latest Version](https://img.shields.io/packagist/v/grazulex/laravel-multipersona.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-multipersona)
+[![Total Downloads](https://img.shields.io/packagist/dt/grazulex/laravel-multipersona.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-multipersona)
+[![License](https://img.shields.io/github/license/grazulex/laravel-multipersona.svg?style=flat-square)](https://github.com/Grazulex/laravel-multipersona/blob/main/LICENSE.md)
+[![PHP Version](https://img.shields.io/packagist/php-v/grazulex/laravel-multipersona.svg?style=flat-square)](https://php.net/)
 [![Laravel Version](https://img.shields.io/badge/laravel-12.x-ff2d20?style=flat-square&logo=laravel)](https://laravel.com/)
-[![Tests](https://img.shields.io/github/actions/workflow/status/grazulex/laravel-turbomaker/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/Grazulex/laravel-turbomaker/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/grazulex/laravel-multipersona/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/Grazulex/laravel-multipersona/actions)
 [![Code Style](https://img.shields.io/badge/code%20style-pint-000000?style=flat-square&logo=laravel)](https://github.com/laravel/pint)
 
 ---
@@ -70,8 +70,8 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md).
 <div align="center">
   <p>Made with ❤️ for the Laravel community</p>
   <p>
-    <a href="https://github.com/grazulex/laravel-turbomaker/wiki">📖 Documentation</a> •
-    <a href="https://github.com/grazulex/laravel-turbomaker/issues">🐛 Report Issues</a> •
-    <a href="https://github.com/grazulex/laravel-turbomaker/discussions">💬 Discussions</a>
+    <a href="https://github.com/grazulex/laravel-multipersona/wiki">📖 Documentation</a> •
+    <a href="https://github.com/grazulex/laravel-multipersona/issues">🐛 Report Issues</a> •
+    <a href="https://github.com/grazulex/laravel-multipersona/discussions">💬 Discussions</a>
   </p>
 </div>

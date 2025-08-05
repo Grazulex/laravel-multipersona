@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use Grazulex\LaravelTurbomaker\LaravelTurbomakerServiceProvider;
+use Grazulex\LaravelMultiPersona\LaravelMultiPersonaServiceProvider;
 use Illuminate\Support\Facades\File;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Override;
@@ -22,7 +22,7 @@ abstract class TestCase extends Orchestra
 
     final public function debugToFile(string $content, string $context = ''): void
     {
-        $file = base_path('turbomaker_test.log');
+        $file = base_path('multipersona_test.log');
         $tag = $context !== '' && $context !== '0' ? "=== $context ===\n" : '';
         File::append($file, $tag.$content."\n");
     }
@@ -71,7 +71,7 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            LaravelTurbomakerServiceProvider::class,
+            LaravelMultiPersonaServiceProvider::class,
         ];
     }
 }

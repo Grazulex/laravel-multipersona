@@ -1,25 +1,23 @@
 {
-    "name": "grazulex/laravel-turbomaker",
-    "description": "Laravel TurboMaker is a productivity-focused package designed to supercharge your Laravel development workflow. With a single command, you can scaffold complete modules (models, migrations, controllers, routes, tests, views, and more) following best practices. It saves hours of repetitive setup work, so you can focus on building features faster.",
+    "name": "grazulex/laravel-multipersona",
+    "description": "Laravel MultiPersona is a lightweight context-layer system for Laravel users. It allows a single user to switch between different roles, accounts, or tenants dynamically, without creating multiple logins or sessions.",
     "keywords": [
         "laravel",
-        "turbomaker",
-        "cli",
-        "artisan",
-        "debug",
-        "scanner",
-        "inspector",
+        "multipersona",
+        "context",
+        "persona",
+        "roles",
+        "tenants",
+        "middleware",
         "php8",
         "pest"
     ],
     "type": "library",
-    "homepage": "https://github.com/grazulex/laravel-turbomaker",
+    "homepage": "https://github.com/grazulex/laravel-multipersona",
     "require": {
         "php": "^8.3",
         "illuminate/support": "^11.0|^12.0",
-        "nesbot/carbon": "^3.10",
-        "symfony/yaml": "^7.3",
-        "grazulex/laravel-modelschema": "^1.1.0"
+        "nesbot/carbon": "^3.10"
     },
     "require-dev": {
         "laravel/pint": "^1.22",
@@ -33,12 +31,12 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "suggest": {
-        "doctrine/dbal": "Required for command `php artisan dev:generate-migration` to generate migrations from models"
+        "doctrine/dbal": "Required for database operations and migrations"
     },
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Grazulex\\LaravelTurbomaker\\": "src/"
+            "Grazulex\\LaravelMultiPersona\\": "src/"
         }
     },
     "autoload-dev": {
@@ -52,7 +50,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Grazulex\\LaravelTurbomaker\\LaravelTurbomakerServiceProvider"
+                "Grazulex\\LaravelMultiPersona\\LaravelMultiPersonaServiceProvider"
             ]
         }
     },
@@ -64,11 +62,11 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/Grazulex/laravel-turbomaker/issues",
-        "source": "https://github.com/Grazulex/laravel-turbomaker",
-        "wiki": "https://github.com/Grazulex/laravel-turbomaker/wiki",
-        "forum": "https://github.com/Grazulex/laravel-turbomaker/discussions",
-        "docs": "https://github.com/Grazulex/laravel-turbomaker/wiki"
+        "issues": "https://github.com/Grazulex/laravel-multipersona/issues",
+        "source": "https://github.com/Grazulex/laravel-multipersona",
+        "wiki": "https://github.com/Grazulex/laravel-multipersona/wiki",
+        "forum": "https://github.com/Grazulex/laravel-multipersona/discussions",
+        "docs": "https://github.com/Grazulex/laravel-multipersona/wiki"
     },
     "scripts": {
         "test": [

@@ -2,12 +2,12 @@ blank_issues_enabled: false
 
 contact_links:
   - name: 💬 General Discussion or Questions
-    url: https://github.com/Grazulex/laravel-turbomaker/discussions
+    url: https://github.com/Grazulex/laravel-multipersona/discussions
     about: Please ask general questions, usage help, or share ideas here.
 
 issue_templates:
   - name: 🐞 Bug Report
-    description: Report a reproducible bug in Laravel Turbomaker
+    description: Report a reproducible bug in Laravel MultiPersona
     file: bug.yml
 
   - name: 🧪 Add or improve tests
