@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Listeners;
 
 use Grazulex\LaravelMultiPersona\Events\PersonaActivated;
-use Grazulex\LaravelMultiPersona\Events\PersonaDeactivated;
 use Grazulex\LaravelMultiPersona\Events\PersonaSwitched;
 use Grazulex\LaravelMultiPersona\Listeners\CachePersonaPermissions;
 use Grazulex\LaravelMultiPersona\Listeners\LogPersonaSwitch;
@@ -13,17 +12,19 @@ use Grazulex\LaravelMultiPersona\Models\Persona;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Mockery;
 use Tests\TestCase;
 
 class ListenersTest extends TestCase
 {
     private CachePersonaPermissions $cacheListener;
+
     private LogPersonaSwitch $logListener;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->cacheListener = new CachePersonaPermissions();
         $this->logListener = new LogPersonaSwitch();
     }
@@ -34,7 +35,7 @@ class ListenersTest extends TestCase
             ->once()
             ->with(
                 'multipersona:permissions:1:1',
-                \Mockery::on(function ($data) {
+                Mockery::on(function ($data) {
                     return is_array($data)
                         && isset($data['persona_id'])
                         && isset($data['persona_name'])
@@ -47,9 +48,12 @@ class ListenersTest extends TestCase
                 3600
             );
 
-        $user = new class extends Model {
+        $user = new class extends Model
+        {
             protected $fillable = ['id', 'name'];
-            public function getKey() {
+
+            public function getKey()
+            {
                 return $this->id;
             }
         };
@@ -69,9 +73,12 @@ class ListenersTest extends TestCase
     public function test_log_persona_switch_handles_persona_switched(): void
     {
         // Test using the actual getSummary method
-        $user = new class extends Model {
+        $user = new class extends Model
+        {
             protected $fillable = ['id', 'name'];
-            public function getKey() {
+
+            public function getKey()
+            {
                 return $this->id;
             }
         };
@@ -95,8 +102,8 @@ class ListenersTest extends TestCase
         // Mock Log to expect the actual data structure from getSummary
         Log::shouldReceive('info')
             ->once()
-            ->with('Persona switched', \Mockery::on(function ($logData) {
-                return isset($logData['user_id']) 
+            ->with('Persona switched', Mockery::on(function ($logData) {
+                return isset($logData['user_id'])
                     && isset($logData['new_persona'])
                     && isset($logData['previous_persona'])
                     && isset($logData['is_initial_activation'])
@@ -128,7 +135,7 @@ class ListenersTest extends TestCase
             ->once()
             ->with(
                 'multipersona:permissions:2:3',
-                \Mockery::on(function ($data) {
+                Mockery::on(function ($data) {
                     return is_array($data)
                         && isset($data['persona_id'])
                         && isset($data['persona_name'])
@@ -143,9 +150,12 @@ class ListenersTest extends TestCase
                 3600
             );
 
-        $user = new class extends Model {
+        $user = new class extends Model
+        {
             protected $fillable = ['id', 'name'];
-            public function getKey() {
+
+            public function getKey()
+            {
                 return $this->id;
             }
         };
@@ -157,7 +167,7 @@ class ListenersTest extends TestCase
             'context' => [
                 'role' => 'user',
                 'permissions' => ['read', 'write'],
-                'department' => 'IT'
+                'department' => 'IT',
             ],
         ]);
 
@@ -168,9 +178,12 @@ class ListenersTest extends TestCase
 
     public function test_log_listener_handles_initial_activation(): void
     {
-        $user = new class extends Model {
+        $user = new class extends Model
+        {
             protected $fillable = ['id', 'name'];
-            public function getKey() {
+
+            public function getKey()
+            {
                 return $this->id;
             }
         };
@@ -188,7 +201,7 @@ class ListenersTest extends TestCase
 
         Log::shouldReceive('info')
             ->once()
-            ->with('Persona switched', \Mockery::on(function ($logData) {
+            ->with('Persona switched', Mockery::on(function ($logData) {
                 return $logData['is_initial_activation'] === true;
             }));
 

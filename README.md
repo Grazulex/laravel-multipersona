@@ -185,19 +185,3 @@ Laravel MultiPersona is open-sourced software licensed under the [MIT license](L
     <a href="https://github.com/grazulex/laravel-multipersona/discussions">💬 Discussions</a>
   </p>
 </div>
----
-
-## 🤝 Contributing
-
-We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md).
-
----
-
-<div align="center">
-  <p>Made with ❤️ for the Laravel community</p>
-  <p>
-    <a href="https://github.com/grazulex/laravel-multipersona/wiki">📖 Documentation</a> •
-    <a href="https://github.com/grazulex/laravel-multipersona/issues">🐛 Report Issues</a> •
-    <a href="https://github.com/grazulex/laravel-multipersona/discussions">💬 Discussions</a>
-  </p>
-</div>
