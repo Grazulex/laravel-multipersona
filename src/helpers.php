@@ -18,8 +18,18 @@ if (! function_exists('personas')) {
      */
     function personas($user = null): Illuminate\Support\Collection
     {
-        $user = $user ?: Illuminate\Support\Facades\Auth::user();
+        if ($user === null) {
+            $user = Illuminate\Support\Facades\Auth::user();
+        }
 
-        return $user->personas ?? collect();
+        if ($user === null) {
+            return collect();
+        }
+
+        // Use PersonaManager to get personas
+        /** @var Grazulex\LaravelMultiPersona\Services\PersonaManager $manager */
+        $manager = app('multipersona');
+
+        return $manager->forUser($user);
     }
 }

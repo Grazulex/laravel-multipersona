@@ -52,10 +52,10 @@ $user->switchToPersona($adminPersona);
 $personaManager = app(PersonaManager::class);
 
 // List personas
-$personas = $manager->getAllForUser($user);
+$personas = $personaManager->forUser($user);
 
 // Set active persona
-$manager->setActive($personas->first());
+$personaManager->setActive($personas->first());
 
 // Use helper
 // Get current active persona

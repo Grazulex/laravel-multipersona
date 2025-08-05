@@ -69,7 +69,12 @@ class PersonaManager
      */
     public function forUser(Model $user): Collection
     {
-        return $user->personas ?? collect();
+        // Use direct database query instead of model relationship
+        // This allows us to work with any user object that has an id
+        /** @var Collection $personas */
+        $personas = Persona::query()->where('user_id', $user->getKey())->get();
+
+        return $personas;
     }
 
     /**

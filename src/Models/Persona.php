@@ -51,7 +51,7 @@ class Persona extends Model implements PersonaInterface
      */
     public function getId(): int|string
     {
-        return $this->id;
+        return $this->getKey();
     }
 
     /**

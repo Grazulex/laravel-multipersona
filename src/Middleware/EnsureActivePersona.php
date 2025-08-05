@@ -12,7 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureActivePersona
 {
     public function __construct(
-        private PersonaManager $personaManager
+        private PersonaManager $personaManager,
+        private readonly string $redirectUrl = '/personas/select'
     ) {}
 
     /**
@@ -21,13 +22,27 @@ class EnsureActivePersona
     public function handle(Request $request, Closure $next, ?string $redirectTo = null): Response
     {
         if (! $this->personaManager->hasActive()) {
-            if ($redirectTo !== null && $redirectTo !== '' && $redirectTo !== '0') {
-                return redirect($redirectTo);
-            }
-
-            abort(403, 'No active persona');
+            return $this->handleNoActivePersona($request, $redirectTo);
         }
 
         return $next($request);
+    }
+
+    /**
+     * Handle the case when no active persona is set
+     */
+    private function handleNoActivePersona(Request $request, ?string $redirectTo = null): Response
+    {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'error' => 'No active persona selected',
+                'message' => 'Please select a persona to continue',
+            ], 403);
+        }
+
+        $redirectUrl = $redirectTo ?? $this->redirectUrl;
+
+        return redirect($redirectUrl)
+            ->with('error', 'Please select a persona to continue');
     }
 }
