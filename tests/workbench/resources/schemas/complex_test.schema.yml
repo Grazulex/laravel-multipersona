@@ -1,0 +1,25 @@
+fields:
+  title:
+    type: string
+    nullable: false
+    comment: "Titre"
+  
+  long_content:
+    type: longText
+    nullable: true
+    comment: "Contenu très long"
+
+  unsigned_big:
+    type: unsignedBigInteger
+    default: 0
+    comment: "Grand nombre non signé"
+
+  tiny_status:
+    type: tinyInteger
+    default: 0
+    comment: "Petit statut"
+
+relationships:
+  user:
+    type: belongsTo
+    model: User

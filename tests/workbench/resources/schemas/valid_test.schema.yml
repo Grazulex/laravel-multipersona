@@ -1,0 +1,7 @@
+fields:
+  title:
+    type: string
+    nullable: false
+
+options:
+  table: posts

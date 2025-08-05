@@ -1,0 +1,114 @@
+{
+    "name": "grazulex/laravel-turbomaker",
+    "description": "Laravel TurboMaker is a productivity-focused package designed to supercharge your Laravel development workflow. With a single command, you can scaffold complete modules (models, migrations, controllers, routes, tests, views, and more) following best practices. It saves hours of repetitive setup work, so you can focus on building features faster.",
+    "keywords": [
+        "laravel",
+        "turbomaker",
+        "cli",
+        "artisan",
+        "debug",
+        "scanner",
+        "inspector",
+        "php8",
+        "pest"
+    ],
+    "type": "library",
+    "homepage": "https://github.com/grazulex/laravel-turbomaker",
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^11.0|^12.0",
+        "nesbot/carbon": "^3.10",
+        "symfony/yaml": "^7.3",
+        "grazulex/laravel-modelschema": "^1.1.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.22",
+        "pestphp/pest": "^3.8",
+        "pestphp/pest-plugin-laravel": "^3.2",
+        "larastan/larastan": "^3.4",
+        "rector/rector": "^2.0",
+        "doctrine/dbal": "^4.2",
+        "orchestra/testbench": "^9.0|^10.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "suggest": {
+        "doctrine/dbal": "Required for command `php artisan dev:generate-migration` to generate migrations from models"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Grazulex\\LaravelTurbomaker\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Grazulex\\LaravelTurbomaker\\LaravelTurbomakerServiceProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "Jean-Marc Strauven",
+            "email": "jms@grazulex.be",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/Grazulex/laravel-turbomaker/issues",
+        "source": "https://github.com/Grazulex/laravel-turbomaker",
+        "wiki": "https://github.com/Grazulex/laravel-turbomaker/wiki",
+        "forum": "https://github.com/Grazulex/laravel-turbomaker/discussions",
+        "docs": "https://github.com/Grazulex/laravel-turbomaker/wiki"
+    },
+    "scripts": {
+        "test": [
+            "./vendor/bin/pest --colors=always --coverage"
+        ],
+        "pint": [
+            "./vendor/bin/pint"
+        ],
+        "phpstan": [
+            "./vendor/bin/phpstan analyse --memory-limit=2G --configuration=phpstan.neon"
+        ],
+        "rector": [
+            "./vendor/bin/rector"
+        ],
+        "full": [
+            "composer run-script pint",
+            "composer run-script phpstan",
+            "composer run-script rector",
+            "composer run-script test"
+        ],
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ],
+        "lint": [
+            "@php vendor/bin/pint --ansi",
+            "@php vendor/bin/phpstan analyse --verbose --ansi"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
