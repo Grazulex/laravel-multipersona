@@ -8,7 +8,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/grazulex/laravel-multipersona.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-multipersona)
 [![License](https://img.shields.io/github/license/grazulex/laravel-multipersona.svg?style=flat-square)](https://github.com/Grazulex/laravel-multipersona/blob/main/LICENSE.md)
 [![PHP Version](https://img.shields.io/packagist/php-v/grazulex/laravel-multipersona.svg?style=flat-square)](https://php.net/)
-[![Laravel Version](https://img.shields.io/badge/laravel-12.x-ff2d20?style=flat-square&logo=laravel)](https://laravel.com/)
+[![Laravel Version](https://img.shields.io/badge/laravel-12.x%20%7C%2013.x-ff2d20?style=flat-square&logo=laravel)](https://laravel.com/)
 [![Tests](https://img.shields.io/github/actions/workflow/status/grazulex/laravel-multipersona/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/Grazulex/laravel-multipersona/actions)
 [![Code Style](https://img.shields.io/badge/code%20style-pint-000000?style=flat-square&logo=laravel)](https://github.com/laravel/pint)
 
@@ -26,6 +26,11 @@ It allows a single user to switch between different **roles**, **accounts**, or 
 - No UI or API enforced – 100% backend, policy, and middleware-driven
 
 ## 📦 Installation
+
+### Requirements
+
+- PHP 8.3 or higher
+- Laravel 12.x or 13.x
 
 ```bash
 composer require grazulex/laravel-multipersona

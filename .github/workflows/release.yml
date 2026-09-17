@@ -42,7 +42,7 @@ jobs:
   
       - name: Install dependencies
         run: |
-            composer require "laravel/framework:12.*" "orchestra/testbench:10.*" --no-interaction --no-update
+            composer require "laravel/framework:13.*" "orchestra/testbench:11.*" --no-interaction --no-update
             composer update --prefer-stable --prefer-dist --no-interaction
   
       - name: List Installed Dependencies
