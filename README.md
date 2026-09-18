@@ -91,7 +91,7 @@ auth()->user()->switchToPersona($persona);
 
 ### Getting Started
 - [📖 Installation Guide](docs/installation-guide.md) - Complete setup instructions
-- [� Usage Guide](docs/usage-guide.md) - Basic and advanced usage examples
+- [📖 Usage Guide](docs/usage-guide.md) - Basic and advanced usage examples
 - [⚡ Quick Start Example](examples/basic_usage.php) - Working code examples
 
 ### Core Features  
