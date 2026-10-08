@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- PHP 8.3+
+- PHP 8.4+
 - Laravel 12.x or 13.x
 - Laravel-supported database (MySQL, PostgreSQL, SQLite, etc.)
 

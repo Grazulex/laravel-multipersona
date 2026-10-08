@@ -645,7 +645,7 @@ php artisan multipersona:cleanup-expired
 ## Package Information
 
 - **Version**: 1.0.0
-- **PHP Requirements**: >= 8.3
+- **PHP Requirements**: >= 8.4
 - **Laravel Requirements**: >= 10.0
 - **License**: MIT
 - **Repository**: https://github.com/Grazulex/laravel-multipersona
