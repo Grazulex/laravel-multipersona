@@ -37,6 +37,7 @@ class SetPersonaFromRequestTest extends TestCase
         ]);
 
         $request = Request::create('/test', 'GET', ['persona_id' => $persona->id]);
+        $request->setUserResolver(fn () => $user);
         $next = fn ($request) => new Response('OK', 200);
 
         $response = $this->middleware->handle($request, $next);
@@ -58,6 +59,7 @@ class SetPersonaFromRequestTest extends TestCase
 
         $request = Request::create('/test', 'GET');
         $request->headers->set('X-Persona-ID', (string) $persona->id);
+        $request->setUserResolver(fn () => $user);
 
         $next = fn ($request) => new Response('OK', 200);
 
@@ -102,6 +104,7 @@ class SetPersonaFromRequestTest extends TestCase
         ]);
 
         $request = Request::create('/test', 'GET', ['custom_persona' => $persona->id]);
+        $request->setUserResolver(fn () => $user);
         $next = fn ($request) => new Response('OK', 200);
 
         $response = $middleware->handle($request, $next);
@@ -110,23 +113,65 @@ class SetPersonaFromRequestTest extends TestCase
         $this->assertEquals($persona->id, $this->personaManager->current()?->getId());
     }
 
-    private function createUser(): object
+    public function test_refuses_persona_owned_by_another_user(): void
     {
-        // Create a simple User-like model for testing
-        return new class extends \Illuminate\Database\Eloquent\Model
+        $owner = $this->createUser(1);
+        $attacker = $this->createUser(2);
+        $persona = Persona::create([
+            'user_id' => $owner->id,
+            'name' => 'Owner Persona',
+            'context' => ['role' => 'admin'],
+            'is_active' => false,
+        ]);
+
+        $request = Request::create('/test', 'GET', ['persona_id' => $persona->id]);
+        $request->setUserResolver(fn () => $attacker);
+        $next = fn ($request) => new Response('OK', 200);
+
+        $response = $this->middleware->handle($request, $next);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertNull($this->personaManager->current());
+    }
+
+    public function test_refuses_persona_when_unauthenticated(): void
+    {
+        $owner = $this->createUser(1);
+        $persona = Persona::create([
+            'user_id' => $owner->id,
+            'name' => 'Owner Persona',
+            'context' => ['role' => 'admin'],
+            'is_active' => false,
+        ]);
+
+        $request = Request::create('/test', 'GET', ['persona_id' => $persona->id]);
+        $next = fn ($request) => new Response('OK', 200);
+
+        $response = $this->middleware->handle($request, $next);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertNull($this->personaManager->current());
+    }
+
+    private function createUser(int $id = 1): object
+    {
+        // Minimal User-like model that uses HasPersonas, as in a real application
+        return new class($id) extends \Illuminate\Database\Eloquent\Model
         {
+            use \Grazulex\LaravelMultiPersona\Traits\HasPersonas;
+
             protected $table = 'users';
 
             protected $fillable = ['name', 'email'];
 
             public $timestamps = false;
 
-            public function __construct(array $attributes = [])
+            public function __construct(int $id = 1)
             {
-                parent::__construct($attributes);
-                $this->id = 1;
-                $this->name = 'Test User';
-                $this->email = 'test@example.com';
+                parent::__construct();
+                $this->id = $id;
+                $this->name = 'Test User '.$id;
+                $this->email = 'test'.$id.'@example.com';
             }
         };
     }

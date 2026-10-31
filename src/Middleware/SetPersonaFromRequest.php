@@ -28,9 +28,14 @@ class SetPersonaFromRequest
         $personaId = $request->get($paramName)
                   ?? $request->header('X-Persona-ID');
 
-        if ($personaId && $this->isValidPersonaId($personaId)) {
+        $user = $request->user();
+
+        // Only activate a persona that belongs to the authenticated user.
+        if ($personaId && $user !== null && $this->isValidPersonaId($personaId)) {
             try {
-                $this->personaManager->setActive($personaId);
+                if ($this->personaManager->canActivate($personaId, $user)) {
+                    $this->personaManager->setActive($personaId);
+                }
             } catch (Exception $e) {
                 // Silently ignore invalid persona IDs
             }
