@@ -37,6 +37,7 @@ class MiddlewareIntegrationTest extends TestCase
         $setMiddleware = new SetPersonaFromRequest($this->personaManager);
 
         $request = Request::create('/test', 'GET', ['persona_id' => $persona->getId()]);
+        $request->setUserResolver(fn () => $user);
         $response = $setMiddleware->handle($request, function ($req) {
             return new Response('Success');
         });
@@ -79,6 +80,7 @@ class MiddlewareIntegrationTest extends TestCase
 
         $request = Request::create('/api/data', 'GET');
         $request->headers->set('X-Persona-ID', (string) $persona->getId());
+        $request->setUserResolver(fn () => $user);
 
         $response = $setMiddleware->handle($request, function ($req) {
             return new Response(json_encode([
@@ -104,6 +106,7 @@ class MiddlewareIntegrationTest extends TestCase
         $setMiddleware = new SetPersonaFromRequest($this->personaManager, 'custom_persona');
 
         $request = Request::create('/test', 'GET', ['custom_persona' => $persona->getId()]);
+        $request->setUserResolver(fn () => $user);
 
         $response = $setMiddleware->handle($request, function ($req) {
             return new Response('Custom param worked');
@@ -126,24 +129,17 @@ class MiddlewareIntegrationTest extends TestCase
 
         $setMiddleware = new SetPersonaFromRequest($this->personaManager);
 
-        // Test: Try to set persona that doesn't belong to current user context
-        // (In real app, you'd have authentication middleware before this)
+        // The user is authenticated, but asks for a persona owned by another user
         $request = Request::create('/test', 'GET', ['persona_id' => $anotherPersona->getId()]);
+        $request->setUserResolver(fn () => $user);
 
         $response = $setMiddleware->handle($request, function ($req) {
             return new Response('Access granted');
         });
 
-        // Middleware should silently ignore invalid persona and continue
+        // Middleware silently ignores the foreign persona and continues
         $this->assertEquals(200, $response->getStatusCode());
-
-        // The persona might be set because our test doesn't have proper user context validation
-        // In a real app with authentication, this would be prevented
-        $current = $this->personaManager->current();
-        if ($current !== null) {
-            // If it was set, verify it's the anotherPersona (which proves the middleware worked)
-            $this->assertEquals($anotherPersona->getId(), $current->getId());
-        }
+        $this->assertNull($this->personaManager->current());
     }
 
     public function test_json_api_error_responses(): void
@@ -192,6 +188,7 @@ class MiddlewareIntegrationTest extends TestCase
 
         $requestData = ['important' => 'data', 'user_input' => 'value'];
         $request = Request::create('/process', 'POST', $requestData + ['persona_id' => $persona->getId()]);
+        $request->setUserResolver(fn () => $user);
 
         $response = $setMiddleware->handle($request, function ($req) use ($requestData) {
             // Verify original request data is preserved
