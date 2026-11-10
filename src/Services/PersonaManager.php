@@ -17,21 +17,55 @@ use InvalidArgumentException;
 
 class PersonaManager
 {
+    private const SESSION_KEY = 'active_persona_id';
+
     private ?PersonaInterface $currentPersona = null;
 
     /**
-     * Get the current active persona
+     * Get the current active persona.
+     *
+     * The `is_active` column is the source of truth. The session only keeps
+     * a pointer to the active persona: if that pointer no longer matches the
+     * database (for instance because another persona was activated
+     * elsewhere), it is resynchronised with the persona that is active for
+     * the same user.
      */
     public function current(): ?PersonaInterface
     {
-        if (! $this->currentPersona instanceof PersonaInterface) {
-            $personaId = Session::get('active_persona_id');
-            if ($personaId) {
-                /** @var Persona|null $persona */
-                $persona = Persona::query()->find($personaId);
-                $this->currentPersona = $persona;
+        if ($this->currentPersona instanceof PersonaInterface) {
+            return $this->currentPersona;
+        }
+
+        $personaId = Session::get(self::SESSION_KEY);
+        $ownerId = Auth::id();
+        $persona = null;
+
+        if ($personaId) {
+            /** @var Persona|null $sessionPersona */
+            $sessionPersona = Persona::query()->find($personaId);
+
+            if ($sessionPersona instanceof Persona && $sessionPersona->is_active) {
+                $persona = $sessionPersona;
+            } elseif ($sessionPersona instanceof Persona) {
+                $ownerId = $sessionPersona->getAttribute('user_id');
             }
         }
+
+        if (! $persona instanceof Persona && $ownerId !== null) {
+            /** @var Persona|null $persona */
+            $persona = Persona::query()
+                ->where('user_id', $ownerId)
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if ($persona instanceof Persona) {
+            Session::put(self::SESSION_KEY, $persona->getId());
+        } elseif ($personaId) {
+            Session::forget(self::SESSION_KEY);
+        }
+
+        $this->currentPersona = $persona;
 
         return $this->currentPersona;
     }
@@ -54,9 +88,11 @@ class PersonaManager
         $previousPersona = $this->currentPersona;
         $user = Auth::user();
 
-        // Set the new persona
+        // Persist the activation (deactivates the user's other personas),
+        // then point the session at it
+        $persona->activate();
         $this->currentPersona = $persona;
-        Session::put('active_persona_id', $persona->getId());
+        Session::put(self::SESSION_KEY, $persona->getId());
 
         // Fire events
         PersonaActivated::dispatch($persona, $user, ['method' => 'setActive']);
@@ -73,14 +109,15 @@ class PersonaManager
      */
     public function clear(): self
     {
-        $previousPersona = $this->currentPersona;
+        $previousPersona = $this->current();
         $user = Auth::user();
 
         $this->currentPersona = null;
-        Session::forget('active_persona_id');
+        Session::forget(self::SESSION_KEY);
 
-        // Fire deactivation event if there was an active persona
+        // Persist the deactivation and fire the event if there was an active persona
         if ($previousPersona instanceof PersonaInterface) {
+            $previousPersona->deactivate();
             PersonaDeactivated::dispatch($previousPersona, $user, ['method' => 'clear']);
         }
 

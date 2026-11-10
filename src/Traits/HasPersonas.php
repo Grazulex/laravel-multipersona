@@ -18,7 +18,8 @@ trait HasPersonas
     }
 
     /**
-     * Get the active persona for this user
+     * Get the active persona for this user (read from the `is_active` column,
+     * the single source of truth shared with the PersonaManager)
      */
     public function activePersona(): ?Persona
     {
@@ -50,13 +51,8 @@ trait HasPersonas
             return false;
         }
 
-        // Deactivate all other personas
-        $this->personas()->update(['is_active' => false]);
-
-        // Activate the selected persona
-        $persona->activate();
-
-        // Also set it as active in the PersonaManager for consistency
+        // Persists the activation (deactivating the other personas of this
+        // user) and points the session at the selected persona
         app('multipersona')->setActive($persona);
 
         return true;

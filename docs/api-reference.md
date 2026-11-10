@@ -90,8 +90,8 @@ class Persona extends Model implements PersonaInterface
     public function canAccess(string $resource, array $context = []): bool
     public function getUser(): ?Model
     public function isActive(): bool
-    public function activate(): self
-    public function deactivate(): self
+    public function activate(): self   // sets is_active and deactivates the user's other personas
+    public function deactivate(): self // clears is_active
     
     // Additional methods
     public function getSummary(): array
@@ -115,17 +115,23 @@ class PersonaManager
     ) {}
     
     /**
-     * Get the currently active persona
+     * Get the currently active persona.
+     * Resolved from the session pointer and checked against the
+     * `is_active` column (the source of truth); falls back to the
+     * authenticated user's active persona.
      */
     public function current(): ?PersonaInterface
     
     /**
-     * Set the active persona
+     * Set the active persona.
+     * Persists it (`is_active`), deactivates the user's other personas
+     * and stores its ID in the session.
      */
     public function setActive(PersonaInterface $persona): void
     
     /**
-     * Clear the active persona
+     * Clear the active persona.
+     * Deactivates it in the database and removes the session pointer.
      */
     public function clear(): void
     
@@ -181,7 +187,8 @@ trait HasPersonas
     public function personas(): MorphMany
     
     /**
-     * Get the currently active persona
+     * Get the currently active persona (same result as PersonaManager::current()
+     * for this user, both read the `is_active` column)
      */
     public function activePersona(): ?PersonaInterface
     
