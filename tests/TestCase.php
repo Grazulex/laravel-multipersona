@@ -40,6 +40,9 @@ abstract class TestCase extends Orchestra
 
         // Use array cache for testing to avoid database cache issues
         $app['config']->set('cache.default', 'array');
+
+        // Run the queued bundled listeners inline
+        $app['config']->set('queue.default', 'sync');
     }
 
     protected function defineDatabaseMigrations(): void

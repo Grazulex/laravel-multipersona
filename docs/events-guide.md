@@ -51,23 +51,60 @@ $event->getSummary();     // Complete event summary
 
 ## Provided Listeners
 
-### 1. LogPersonaSwitch
+The service provider registers the bundled listeners automatically:
 
-Automatically logs all persona changes in Laravel logs.
+| Event | Listener | Queued |
+|-------|----------|--------|
+| `PersonaActivated` | `CachePersonaPermissions` | yes |
+| `PersonaSwitched` | `LogPersonaSwitch` | yes |
+| `PersonaSwitched` | `ForgetPersonaPermissions` | no |
+| `PersonaDeactivated` | `ForgetPersonaPermissions` | no |
+
+`CachePersonaPermissions` and `LogPersonaSwitch` implement `ShouldQueue`: they run on your default queue connection (inline with the `sync` driver).
+
+To register the listeners yourself (or not at all), disable the automatic registration in `config/multipersona.php`:
 
 ```php
-// The listener is automatically configured and generates logs like:
-// [INFO] Persona switched: {"user_id": 1, "from_persona": "Admin", "to_persona": "User", ...}
+'register_listeners' => false,
+```
+
+If you previously registered these listeners in your own `EventServiceProvider`, remove them or set this option to `false` so they do not run twice.
+
+### 1. LogPersonaSwitch
+
+Logs all persona switches in Laravel logs.
+
+```php
+// Generates logs like:
+// [INFO] Persona switched: {"user_id": 1, "previous_persona": "Admin", "new_persona": "User", ...}
 ```
 
 ### 2. CachePersonaPermissions
 
-Automatically caches persona permissions to improve performance.
+Caches the permissions of the activated persona for one hour, under the key
+`multipersona:permissions:{user_id}:{persona_id}`. Nothing is cached when the event has no user.
+
+Read the cache with the static helpers:
 
 ```php
-// Cache is automatically managed with keys:
-// "multipersona:permissions:{user_id}:{persona_id}"
+use Grazulex\LaravelMultiPersona\Listeners\CachePersonaPermissions;
+
+$entry = CachePersonaPermissions::cached(auth()->user(), persona());
+// null, or ['persona_id' => ..., 'persona_name' => ..., 'context' => [...],
+//           'permissions' => [...], 'role' => ..., 'cached_at' => ...]
+
+CachePersonaPermissions::cacheKey($user, $persona); // the cache key
+CachePersonaPermissions::forget($user, $persona);   // manual invalidation
 ```
+
+### 3. ForgetPersonaPermissions
+
+Invalidates the cache written by `CachePersonaPermissions` as soon as a persona stops being the active one. It runs synchronously:
+
+- on `PersonaDeactivated`, the cache of the deactivated persona is forgotten;
+- on `PersonaSwitched`, the cache of the previous persona is forgotten (re-activating the same persona keeps its fresh entry).
+
+In addition, when `register_listeners` is enabled, the cache of a persona is forgotten whenever the `Persona` model is updated (for example its `context`) or deleted.
 
 ## Creating Custom Listeners
 

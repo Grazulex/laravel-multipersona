@@ -74,4 +74,19 @@ return [
         'persona.ensure' => Grazulex\LaravelMultiPersona\Middleware\EnsureActivePersona::class,
         'persona.set' => Grazulex\LaravelMultiPersona\Middleware\SetPersonaFromRequest::class,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bundled Listeners
+    |--------------------------------------------------------------------------
+    |
+    | When set to true, the bundled listeners are registered automatically:
+    | CachePersonaPermissions (PersonaActivated), LogPersonaSwitch
+    | (PersonaSwitched) and ForgetPersonaPermissions (PersonaSwitched and
+    | PersonaDeactivated). The permissions cache of a persona is also
+    | forgotten when the persona is updated or deleted. Set this to false
+    | if you register these listeners yourself.
+    |
+    */
+    'register_listeners' => true,
 ];

@@ -306,28 +306,56 @@ class PersonaDeactivated
 ```php
 namespace Grazulex\LaravelMultiPersona\Listeners;
 
-class LogPersonaSwitch
+class LogPersonaSwitch implements ShouldQueue
 {
     public function handle(PersonaSwitched $event): void
-    
-    private function formatLogMessage(array $summary): string
 }
 ```
+
+Registered automatically on `PersonaSwitched` (see `register_listeners`).
 
 ### CachePersonaPermissions
 
 ```php
 namespace Grazulex\LaravelMultiPersona\Listeners;
 
-class CachePersonaPermissions
+class CachePersonaPermissions implements ShouldQueue
 {
-    public function handle(PersonaActivated|PersonaSwitched $event): void
-    
-    protected function getCacheKey(Model $user, PersonaInterface $persona): string
-    
-    protected function getCacheTtl(): int
+    public const CACHE_PREFIX = 'multipersona:permissions';
+    public const TTL = 3600; // seconds
+
+    public function handle(PersonaActivated $event): void
+
+    // "multipersona:permissions:{user_id}:{persona_id}"
+    public static function cacheKey(mixed $user, PersonaInterface|int|string $persona): string
+
+    // Cached entry (persona_id, persona_name, context, permissions, role, cached_at) or null
+    public static function cached(mixed $user, PersonaInterface|int|string $persona): ?array
+
+    public static function forget(mixed $user, PersonaInterface|int|string $persona): void
 }
 ```
+
+Registered automatically on `PersonaActivated`. `$user` can be a model, an object with an `id` property, or the user identifier.
+
+### ForgetPersonaPermissions
+
+```php
+namespace Grazulex\LaravelMultiPersona\Listeners;
+
+class ForgetPersonaPermissions
+{
+    public function handle(PersonaDeactivated|PersonaSwitched $event): void
+
+    // Forgets the cache of the deactivated persona
+    public function handleDeactivated(PersonaDeactivated $event): void
+
+    // Forgets the cache of the previous persona (unless it is the same persona)
+    public function handleSwitched(PersonaSwitched $event): void
+}
+```
+
+Runs synchronously and is registered automatically on `PersonaSwitched` and `PersonaDeactivated`. The service provider also forgets the cache of a persona when the `Persona` model is updated or deleted.
 
 ## Middleware
 
@@ -461,13 +489,10 @@ return [
     | Events Configuration
     |--------------------------------------------------------------------------
     */
-    'events' => [
-        'enabled' => true,
-        'listeners' => [
-            \Grazulex\LaravelMultiPersona\Listeners\LogPersonaSwitch::class,
-            \Grazulex\LaravelMultiPersona\Listeners\CachePersonaPermissions::class,
-        ],
-    ],
+    // Registers LogPersonaSwitch, CachePersonaPermissions and
+    // ForgetPersonaPermissions, and forgets the permissions cache of a
+    // persona when it is updated or deleted
+    'register_listeners' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -542,12 +567,12 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
         // Register middleware
         $this->registerMiddleware();
         
-        // Register event listeners
-        $this->registerEventListeners();
+        // Register the bundled listeners (unless register_listeners is false)
+        $this->registerListeners();
     }
     
-    protected function registerMiddleware(): void
-    protected function registerEventListeners(): void
+    private function registerMiddleware(): void
+    private function registerListeners(): void
 }
 ```
 

@@ -80,6 +80,7 @@ The active persona is stored in the database (`is_active` column), the single so
 - **Middleware**: `EnsureActivePersona`, `SetPersonaFromRequest`
 - **Helpers**: `persona()`, `personas($user)`
 - **Events**: Complete event system for persona lifecycle
+- **Listeners**: registered automatically: `LogPersonaSwitch`, `CachePersonaPermissions` (permissions cache) and `ForgetPersonaPermissions` (cache invalidation when the persona changes). Disable with `'register_listeners' => false` (see [Events Guide](docs/events-guide.md#provided-listeners))
 - **Service**: `PersonaManager` for programmatic access
 - **Contract**: `PersonaInterface` for custom implementations
 
