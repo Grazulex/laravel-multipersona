@@ -99,6 +99,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bundled Listeners
+    |--------------------------------------------------------------------------
+    | Registers LogPersonaSwitch, CachePersonaPermissions and
+    | ForgetPersonaPermissions automatically. Set to false if you register
+    | them yourself.
+    */
+    'register_listeners' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Configuration
     |--------------------------------------------------------------------------
     */

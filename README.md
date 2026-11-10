@@ -72,12 +72,15 @@ $persona = auth()->user()->createPersona([
 auth()->user()->switchToPersona($persona);
 ```
 
+The active persona is stored in the database (`is_active` column), the single source of truth: activating a persona deactivates the user's other personas, and `persona()`, `PersonaManager::current()` and `$user->activePersona()` always return the same persona. The session only keeps a pointer that is kept in sync with the database (see [Architecture](docs/architecture.md#session-management)).
+
 ## 🧱 What's Provided
 
 - **Trait**: `HasPersonas` for your `User` model
 - **Middleware**: `EnsureActivePersona`, `SetPersonaFromRequest`
 - **Helpers**: `persona()`, `personas($user)`
 - **Events**: Complete event system for persona lifecycle
+- **Listeners**: registered automatically: `LogPersonaSwitch`, `CachePersonaPermissions` (permissions cache) and `ForgetPersonaPermissions` (cache invalidation when the persona changes). Disable with `'register_listeners' => false` (see [Events Guide](docs/events-guide.md#provided-listeners))
 - **Service**: `PersonaManager` for programmatic access
 - **Contract**: `PersonaInterface` for custom implementations
 

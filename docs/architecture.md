@@ -68,8 +68,8 @@ User Request → Middleware → PersonaManager → Session → Database
 1. **Request arrives** with persona context
 2. **Middleware** processes persona information
 3. **PersonaManager** validates and sets active persona
-4. **Session** stores active persona ID
-5. **Database** retrieves persona data when needed
+4. **Database** persists the active persona (`is_active`, the source of truth)
+5. **Session** keeps a pointer to the active persona ID, kept in sync with the database
 
 ## Database Schema
 
@@ -110,8 +110,13 @@ The `context` field stores JSON data that can include:
 
 ## Session Management
 
-- Active persona ID is stored in session with key `active_persona_id`
-- Session is automatically managed by PersonaManager
+- The `is_active` column is the single source of truth for the active persona. A user has at most one active persona at a time.
+- `Persona::activate()` deactivates the user's other personas in the same transaction; `PersonaManager::setActive()` and `HasPersonas::switchToPersona()` go through it, and `PersonaManager::clear()` deactivates the persona in the database.
+- The session only keeps a pointer to the active persona ID under the key `active_persona_id`. When `PersonaManager::current()` resolves the persona, it checks the pointer against the database:
+  - if the persona in the session is no longer active (another persona was activated elsewhere), the persona active for the same user is used and the session is updated;
+  - if no persona is active anymore, the pointer is removed;
+  - if the session holds no pointer, the active persona of the authenticated user is restored (for example after a new login).
+- As a result, `PersonaManager::current()` and `HasPersonas::activePersona()` always agree.
 - Persona data is lazy-loaded from database when needed
 
 ## Security Considerations

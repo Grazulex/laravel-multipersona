@@ -104,11 +104,26 @@ class Persona extends Model implements PersonaInterface
     }
 
     /**
-     * Set this persona as active
+     * Set this persona as active.
+     *
+     * A user has at most one active persona: every other persona of the
+     * same user is deactivated in the same transaction.
      */
     public function activate(): self
     {
-        $this->update(['is_active' => true]);
+        $this->getConnection()->transaction(function (): void {
+            $ownerId = $this->getAttribute('user_id');
+
+            if ($ownerId !== null) {
+                static::query()
+                    ->where('user_id', $ownerId)
+                    ->whereKeyNot($this->getKey())
+                    ->where('is_active', true)
+                    ->update(['is_active' => false]);
+            }
+
+            $this->update(['is_active' => true]);
+        });
 
         return $this;
     }
