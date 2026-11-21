@@ -72,6 +72,37 @@ if ($role === 'admin') {
 }
 ```
 
+### 4. Gate Integration
+
+By default, Laravel's Gate (`$user->can()`, `Gate::allows()`, `@can`, `$this->authorize()`, the `can` middleware) does not know about personas. Enable the integration in `config/multipersona.php` to evaluate abilities in the context of the active persona:
+
+```php
+'gate' => [
+    'enabled' => true,
+    'deny_unlisted' => false,
+],
+```
+
+A `Gate::before` callback (`Grazulex\LaravelMultiPersona\Authorization\PersonaGate`) is then registered:
+
+- an ability listed in the `permissions` of the user's active persona (checked through `canAccess()`) is **granted**;
+- any other ability is **denied** when `deny_unlisted` is `true`; otherwise the decision is left to your regular gates and policies;
+- users without an active persona, guests, and personas without a `permissions` list are not affected.
+
+```php
+$admin = $user->createPersona('Admin', ['permissions' => ['manage_users']]);
+$client = $user->createPersona('Client', ['permissions' => ['view_dashboard']]);
+
+$user->switchToPersona($admin);
+$user->can('manage_users');   // true
+$user->can('view_dashboard'); // false (or your own gate's answer)
+
+$user->switchToPersona($client);
+$user->can('manage_users');   // false (or your own gate's answer)
+```
+
+`Gate::forUser($other)` uses the active persona of `$other`. Because the callback runs before policies, a listed ability is granted whatever the arguments (`$user->can('update', $post)` is `true` when `update` is listed): list only abilities that need no per-model check, or keep those in policies. Overriding `canAccess()` in a custom persona model changes what the Gate grants.
+
 ## Advanced Usage Examples
 
 ### 1. Multi-tenant System

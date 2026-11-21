@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Grazulex\LaravelMultiPersona;
 
+use Grazulex\LaravelMultiPersona\Authorization\PersonaGate;
 use Grazulex\LaravelMultiPersona\Contracts\PersonaInterface;
 use Grazulex\LaravelMultiPersona\Events\PersonaActivated;
 use Grazulex\LaravelMultiPersona\Events\PersonaDeactivated;
@@ -13,6 +14,7 @@ use Grazulex\LaravelMultiPersona\Listeners\ForgetPersonaPermissions;
 use Grazulex\LaravelMultiPersona\Listeners\LogPersonaSwitch;
 use Grazulex\LaravelMultiPersona\Models\Persona;
 use Grazulex\LaravelMultiPersona\Services\PersonaManager;
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -50,6 +52,16 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerListeners();
         $this->registerHelpers();
+        $this->registerGate();
+    }
+
+    private function registerGate(): void
+    {
+        if (! config('multipersona.gate.enabled', false)) {
+            return;
+        }
+
+        PersonaGate::register($this->app->make(Gate::class));
     }
 
     private function registerListeners(): void

@@ -357,6 +357,31 @@ class ForgetPersonaPermissions
 
 Runs synchronously and is registered automatically on `PersonaSwitched` and `PersonaDeactivated`. The service provider also forgets the cache of a persona when the `Persona` model is updated or deleted.
 
+## Authorization
+
+### PersonaGate
+
+```php
+namespace Grazulex\LaravelMultiPersona\Authorization;
+
+class PersonaGate
+{
+    public function __construct(PersonaManager $manager)
+
+    // Registers before() as a Gate::before callback
+    public static function register(Gate $gate): void
+
+    // true = grant, false = deny, null = defer to the regular gates and policies
+    public function before(mixed $user, string $ability, array $arguments = []): ?bool
+
+    // Active persona of the user: the PersonaManager's persona when it belongs
+    // to the user, otherwise the user's active persona read from the database
+    public function personaFor(Authenticatable $user): ?PersonaInterface
+}
+```
+
+Registered automatically when `gate.enabled` is `true`. When the user's active persona has a `permissions` list, an ability accepted by `canAccess()` is granted; other abilities are denied if `gate.deny_unlisted` is `true`, otherwise deferred. See [Usage Guide](usage-guide.md#4-gate-integration).
+
 ## Middleware
 
 ### EnsureActivePersona
@@ -496,6 +521,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Gate Integration
+    |--------------------------------------------------------------------------
+    */
+    // Evaluates Gate abilities in the context of the active persona
+    // (see PersonaGate). Disabled by default.
+    'gate' => [
+        'enabled' => false,
+        'deny_unlisted' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Auto-discovery Configuration
     |--------------------------------------------------------------------------
     */
@@ -569,10 +606,14 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
         
         // Register the bundled listeners (unless register_listeners is false)
         $this->registerListeners();
+
+        // Register the PersonaGate Gate::before callback (when gate.enabled is true)
+        $this->registerGate();
     }
     
     private function registerMiddleware(): void
     private function registerListeners(): void
+    private function registerGate(): void
 }
 ```
 

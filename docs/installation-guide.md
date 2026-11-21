@@ -109,6 +109,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Gate Integration
+    |--------------------------------------------------------------------------
+    | When enabled, $user->can(), Gate::allows(), @can... grant the abilities
+    | listed in the permissions of the active persona. With deny_unlisted,
+    | other abilities are denied while that persona is active.
+    */
+    'gate' => [
+        'enabled' => false,
+        'deny_unlisted' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Configuration
     |--------------------------------------------------------------------------
     */

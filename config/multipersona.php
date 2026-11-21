@@ -89,4 +89,24 @@ return [
     |
     */
     'register_listeners' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gate Integration
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, abilities checked through the Gate ($user->can(),
+    | Gate::allows(), @can, authorize()...) are evaluated in the context of
+    | the user's active persona. An ability listed in the `permissions` of
+    | the active persona is granted. With `deny_unlisted` set to true, any
+    | other ability is denied while that persona is active; otherwise the
+    | decision is left to your regular gates and policies. Users without an
+    | active persona, and personas without a `permissions` list, are not
+    | affected.
+    |
+    */
+    'gate' => [
+        'enabled' => false,
+        'deny_unlisted' => false,
+    ],
 ];
