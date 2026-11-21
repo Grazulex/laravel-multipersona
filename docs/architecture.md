@@ -59,6 +59,10 @@ Two middleware classes for request handling:
 - **EnsureActivePersona**: Ensures a persona is active
 - **SetPersonaFromRequest**: Sets persona from request parameters
 
+### 6. Gate Integration
+
+`Authorization\PersonaGate` is an optional `Gate::before` callback (enabled with `gate.enabled`). It resolves the active persona of the checked user and grants the abilities its `canAccess()` accepts when the persona defines a `permissions` list. Other abilities are denied with `gate.deny_unlisted`, or left to the regular gates and policies. See [Usage Guide](usage-guide.md#4-gate-integration).
+
 ## Data Flow
 
 ```
@@ -183,6 +187,7 @@ Configuration is stored in `config/multipersona.php`:
 - Session key
 - Default permissions
 - Middleware registration
+- Gate integration (`gate.enabled`, `gate.deny_unlisted`)
 
 ## Migration Path
 
