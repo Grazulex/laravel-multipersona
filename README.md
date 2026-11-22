@@ -77,6 +77,7 @@ The active persona is stored in the database (`is_active` column), the single so
 ## 🧱 What's Provided
 
 - **Trait**: `HasPersonas` for your `User` model
+- **Data filtering**: `BelongsToPersona` trait for your own models: a global scope restricts their queries to the rows of the active persona, on a configurable column (see [Usage Guide](docs/usage-guide.md#5-data-filtering-per-persona))
 - **Middleware**: `EnsureActivePersona`, `SetPersonaFromRequest`
 - **Helpers**: `persona()`, `personas($user)`
 - **Events**: Complete event system for persona lifecycle
@@ -138,6 +139,40 @@ $companyB = $user->createPersona([
     ]
 ]);
 ```
+
+Filter the data of each company with the `BelongsToPersona` trait. Its global scope restricts every query on the model to the rows of the active persona:
+
+```php
+use Grazulex\LaravelMultiPersona\Traits\BelongsToPersona;
+
+class Invoice extends Model
+{
+    use BelongsToPersona;
+
+    // Compare invoices.company_id with the company_id of the persona context
+    public function getPersonaColumn(): string
+    {
+        return 'company_id';
+    }
+
+    public function getPersonaContextKey(): ?string
+    {
+        return 'company_id';
+    }
+}
+
+$user->switchToPersona($companyA);
+Invoice::all();                      // invoices of company 1 only
+Invoice::create(['total' => 100]);   // company_id is set to 1
+
+$user->switchToPersona($companyB);
+Invoice::all();                      // invoices of company 2 only
+
+Invoice::withoutPersonaScope()->get();      // no filter
+Invoice::forPersona($companyA)->get();      // another persona
+```
+
+Without overrides, the trait compares the `persona_id` column with the ID of the active persona. The column, the context key and the behaviour without active persona are set in the `scope` section of `config/multipersona.php`. When no persona is active, queries are **not filtered** by default: set `'scope' => ['strict' => true]` to return no row instead, or protect the routes with the `EnsureActivePersona` middleware.
 
 ### Middleware Protection
 ```php

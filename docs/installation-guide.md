@@ -122,6 +122,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Persona Data Scope
+    |--------------------------------------------------------------------------
+    | Settings of the BelongsToPersona trait: column of your models that
+    | references the persona, optional key of the persona context compared
+    | with it (null = persona ID), and strict mode (queries return no row
+    | when no persona is active).
+    */
+    'scope' => [
+        'column' => 'persona_id',
+        'context_key' => null,
+        'strict' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Configuration
     |--------------------------------------------------------------------------
     */

@@ -63,6 +63,10 @@ Two middleware classes for request handling:
 
 `Authorization\PersonaGate` is an optional `Gate::before` callback (enabled with `gate.enabled`). It resolves the active persona of the checked user and grants the abilities its `canAccess()` accepts when the persona defines a `permissions` list. Other abilities are denied with `gate.deny_unlisted`, or left to the regular gates and policies. See [Usage Guide](usage-guide.md#4-gate-integration).
 
+### 7. Data Filtering
+
+`Traits\BelongsToPersona` is a trait for application models. It registers the `Scopes\PersonaScope` global scope, which restricts Eloquent queries to the rows whose persona column (`scope.column`, `persona_id` by default) matches the active persona: its ID, or a value of its context when `scope.context_key` is set. New records get the column filled from the active persona. Without active persona, queries are not filtered unless `scope.strict` is enabled. See [Usage Guide](usage-guide.md#5-data-filtering-per-persona).
+
 ## Data Flow
 
 ```
@@ -129,6 +133,7 @@ The `context` field stores JSON data that can include:
 2. **Permissions**: Check persona permissions before granting access
 3. **Session Security**: Standard Laravel session security applies
 4. **Database**: Use proper indexes for performance
+5. **Data filtering**: `BelongsToPersona` does not filter queries when no persona is active unless `scope.strict` is enabled; it only covers Eloquent queries, not `DB::table()`
 
 ## Extension Points
 
@@ -188,6 +193,7 @@ Configuration is stored in `config/multipersona.php`:
 - Default permissions
 - Middleware registration
 - Gate integration (`gate.enabled`, `gate.deny_unlisted`)
+- Persona data scope (`scope.column`, `scope.context_key`, `scope.strict`)
 
 ## Migration Path
 

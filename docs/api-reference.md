@@ -234,6 +234,87 @@ trait HasPersonas
 }
 ```
 
+### BelongsToPersona
+
+```php
+namespace Grazulex\LaravelMultiPersona\Traits;
+
+trait BelongsToPersona
+{
+    /**
+     * Registers the PersonaScope global scope and fills the persona column
+     * of new records from the active persona
+     */
+    public static function bootBelongsToPersona(): void
+
+    /**
+     * Column referencing the persona (default: config scope.column)
+     */
+    public function getPersonaColumn(): string
+
+    /**
+     * Key of the persona context compared with the column, or null to
+     * compare with the persona ID (default: config scope.context_key)
+     */
+    public function getPersonaContextKey(): ?string
+
+    /**
+     * Persona column prefixed with the table name
+     */
+    public function getQualifiedPersonaColumn(): string
+
+    /**
+     * Owning persona (when the column holds the persona ID)
+     */
+    public function persona(): BelongsTo
+
+    /**
+     * Model::withoutPersonaScope(): query without the persona filter
+     */
+    public function scopeWithoutPersonaScope(Builder $query): Builder
+
+    /**
+     * Model::forPersona($persona): rows of the given persona (instance) or
+     * rows whose column equals the given scalar
+     */
+    public function scopeForPersona(Builder $query, PersonaInterface|int|string $persona): Builder
+}
+```
+
+For models of your application (not the `User` model). See [Usage Guide](usage-guide.md#5-data-filtering-per-persona).
+
+## Scopes
+
+### PersonaScope
+
+```php
+namespace Grazulex\LaravelMultiPersona\Scopes;
+
+class PersonaScope implements Scope
+{
+    public const string DEFAULT_COLUMN = 'persona_id';
+
+    // Column referencing the persona for the model
+    public static function column(Model $model): string
+
+    // Context key compared with the column, or null for the persona ID
+    public static function contextKey(Model $model): ?string
+
+    // Value the column must hold for a row to belong to the persona
+    public static function valueFor(PersonaInterface $persona, ?string $contextKey = null): int|string|null
+
+    // Persona currently active (PersonaManager::current())
+    public static function activePersona(): ?PersonaInterface
+
+    // Value of scope.strict
+    public static function isStrict(): bool
+
+    public function apply(Builder $builder, Model $model): void
+}
+```
+
+Global scope added by `BelongsToPersona`. With an active persona, the query is restricted to the rows whose column matches the persona; a persona without value for the context key matches no row. Without active persona, the query is not filtered unless `scope.strict` is `true`, in which case it returns no row.
+
 ## Events
 
 ### PersonaActivated
@@ -529,6 +610,20 @@ return [
     'gate' => [
         'enabled' => false,
         'deny_unlisted' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Persona Data Scope
+    |--------------------------------------------------------------------------
+    */
+    // Settings of the BelongsToPersona trait: column referencing the
+    // persona, optional key of the persona context compared with it (null =
+    // persona ID), and strict mode (no row without active persona).
+    'scope' => [
+        'column' => 'persona_id',
+        'context_key' => null,
+        'strict' => false,
     ],
 
     /*

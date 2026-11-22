@@ -200,6 +200,8 @@ class BindTenantContext
 }
 ```
 
+To filter Eloquent models by the company of the active persona, no custom middleware is needed: use the `BelongsToPersona` trait (see [Usage Guide](usage-guide.md#5-data-filtering-per-persona)). Combine it with `EnsureActivePersona`, or enable `scope.strict`, so that requests without active persona do not read unfiltered data.
+
 ### 5. Dynamic Persona Selection
 
 ```php
