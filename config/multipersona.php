@@ -109,4 +109,25 @@ return [
         'enabled' => false,
         'deny_unlisted' => false,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Persona Data Scope
+    |--------------------------------------------------------------------------
+    |
+    | Settings of the BelongsToPersona trait, which filters the queries of a
+    | model by the active persona. `column` is the column of your models that
+    | references the persona. By default it holds the persona ID; set
+    | `context_key` (for instance 'company_id') to compare it with that value
+    | of the persona context instead. When no persona is active, queries are
+    | not filtered unless `strict` is true, in which case they return no
+    | row. A model can override the column and the context key with
+    | getPersonaColumn() and getPersonaContextKey().
+    |
+    */
+    'scope' => [
+        'column' => 'persona_id',
+        'context_key' => null,
+        'strict' => false,
+    ],
 ];

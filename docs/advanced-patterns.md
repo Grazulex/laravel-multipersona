@@ -45,6 +45,36 @@ class User extends Model
 }
 ```
 
+### Tenant Data Filtering
+
+Use the `BelongsToPersona` trait on tenant-owned models to restrict their queries to the tenant of the active persona:
+
+```php
+use Grazulex\LaravelMultiPersona\Traits\BelongsToPersona;
+
+class Project extends Model
+{
+    use BelongsToPersona;
+
+    // projects.tenant_id is compared with the tenant_id of the persona context
+    public function getPersonaColumn(): string
+    {
+        return 'tenant_id';
+    }
+
+    public function getPersonaContextKey(): ?string
+    {
+        return 'tenant_id';
+    }
+}
+
+Project::all();                        // projects of the active tenant only
+Project::create(['name' => 'Website']); // tenant_id filled from the persona
+Project::withoutPersonaScope()->get(); // every tenant (reports, maintenance)
+```
+
+To apply the same column and context key to every model, set `scope.column` and `scope.context_key` in `config/multipersona.php` instead of overriding the methods. Enable `scope.strict` so that queries return no row when no persona is active. See [Usage Guide](usage-guide.md#5-data-filtering-per-persona).
+
 ### Automatic Persona Creation
 
 ```php

@@ -103,6 +103,93 @@ $user->can('manage_users');   // false (or your own gate's answer)
 
 `Gate::forUser($other)` uses the active persona of `$other`. Because the callback runs before policies, a listed ability is granted whatever the arguments (`$user->can('update', $post)` is `true` when `update` is listed): list only abilities that need no per-model check, or keep those in policies. Overriding `canAccess()` in a custom persona model changes what the Gate grants.
 
+### 5. Data Filtering per Persona
+
+Add the `BelongsToPersona` trait to the models whose rows belong to a persona. It registers a global scope (`Grazulex\LaravelMultiPersona\Scopes\PersonaScope`) that restricts every Eloquent query on the model to the rows of the active persona.
+
+```php
+use Grazulex\LaravelMultiPersona\Traits\BelongsToPersona;
+use Illuminate\Database\Eloquent\Model;
+
+class Document extends Model
+{
+    use BelongsToPersona;
+}
+```
+
+The table needs a column referencing the persona, `persona_id` by default:
+
+```php
+Schema::table('documents', function (Blueprint $table) {
+    $table->foreignId('persona_id')->nullable()->index();
+});
+```
+
+```php
+$user->switchToPersona($admin);
+
+Document::all();                           // only the documents of $admin
+Document::where('title', 'Report')->get(); // still filtered
+Document::create(['title' => 'Report']);   // persona_id is set to $admin->id
+$document->persona;                        // the owning Persona
+
+$user->switchToPersona($client);
+
+Document::all();                           // only the documents of $client
+```
+
+The scope applies to reads, counts, updates and deletes made through Eloquent. It does not apply to the query builder (`DB::table('documents')`). When a record is created, the persona column is filled from the active persona unless you set it yourself.
+
+#### Configuration
+
+```php
+// config/multipersona.php
+'scope' => [
+    'column' => 'persona_id',
+    'context_key' => null,
+    'strict' => false,
+],
+```
+
+- `column`: column of your models that references the persona.
+- `context_key`: by default (`null`) the column is compared with the persona ID. Set a key of the persona context (dot notation is supported) to compare the column with that value instead, for instance `'company_id'` so that several personas of the same company share the same rows. An active persona that has no value for this key sees no row.
+- `strict`: behaviour when **no persona is active** (guests, console commands, queued jobs, users who have not selected a persona). With `false` the queries are not filtered; with `true` they return no row.
+
+> **Important**: with `strict` set to `false`, a request without active persona sees the rows of every persona. Enable `strict`, or protect the routes with the `EnsureActivePersona` middleware, when the filter is used to isolate data.
+
+#### Per-model column
+
+Override the trait methods to use another column or context key for one model:
+
+```php
+class Invoice extends Model
+{
+    use BelongsToPersona;
+
+    public function getPersonaColumn(): string
+    {
+        return 'company_id';
+    }
+
+    public function getPersonaContextKey(): ?string
+    {
+        return 'company_id';
+    }
+}
+
+$user->createPersona('Acme Corp Admin', ['company_id' => 1, 'role' => 'admin']);
+```
+
+#### Bypassing the filter
+
+```php
+Document::withoutPersonaScope()->get();   // every row
+Document::forPersona($otherPersona)->get(); // rows of another persona
+Document::forPersona(42)->get();          // rows whose column equals 42
+```
+
+`withoutGlobalScope(PersonaScope::class)` works as well. The `persona()` relationship of the trait is only meaningful when the column holds the persona ID (no `context_key`).
+
 ## Advanced Usage Examples
 
 ### 1. Multi-tenant System
