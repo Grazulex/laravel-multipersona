@@ -82,6 +82,7 @@ The active persona is stored in the database (`is_active` column), the single so
 - **Helpers**: `persona()`, `personas($user)`
 - **Events**: Complete event system for persona lifecycle
 - **Listeners**: registered automatically: `LogPersonaSwitch`, `CachePersonaPermissions` (permissions cache) and `ForgetPersonaPermissions` (cache invalidation when the persona changes). Disable with `'register_listeners' => false` (see [Events Guide](docs/events-guide.md#provided-listeners))
+- **Switch audit** (opt-in): with `'audit' => ['enabled' => true]`, every persona switch (user, date, source and target persona) is recorded in the `persona_switch_logs` table through the `PersonaSwitchLog` model, and a `PersonaSwitchLogged` event is dispatched; `'log_channel'` sends the `LogPersonaSwitch` entries to a dedicated log channel (see [Events Guide](docs/events-guide.md#persona-switch-audit))
 - **Gate integration** (opt-in): with `'gate' => ['enabled' => true]`, `$user->can()`, `Gate::allows()` and `@can` grant the abilities listed in the `permissions` of the active persona; `'deny_unlisted' => true` also denies the other abilities while that persona is active (see [Usage Guide](docs/usage-guide.md#4-gate-integration))
 - **Service**: `PersonaManager` for programmatic access
 - **Contract**: `PersonaInterface` for custom implementations

@@ -49,6 +49,18 @@ $event->getContext();     // Deactivation context
 $event->getSummary();     // Complete event summary
 ```
 
+### 4. PersonaSwitchLogged
+
+Triggered once a persona switch has been written to the audit table (only when the [audit](#persona-switch-audit) is enabled).
+
+```php
+use Grazulex\LaravelMultiPersona\Events\PersonaSwitchLogged;
+
+// The event contains:
+$event->getLog();         // The PersonaSwitchLog entry that was recorded
+$event->getUser();        // The user
+```
+
 ## Provided Listeners
 
 The service provider registers the bundled listeners automatically:
@@ -76,7 +88,16 @@ Logs all persona switches in Laravel logs.
 
 ```php
 // Generates logs like:
-// [INFO] Persona switched: {"user_id": 1, "previous_persona": "Admin", "new_persona": "User", ...}
+// [INFO] Persona switched: {"user_id": 1, "previous_persona_id": 3, "previous_persona": "Admin",
+//                           "new_persona_id": 4, "new_persona": "User", ...}
+```
+
+The entries go to the default log channel. To send them to a dedicated channel (defined in `config/logging.php`), set `audit.log_channel`:
+
+```php
+'audit' => [
+    'log_channel' => 'audit',
+],
 ```
 
 ### 2. CachePersonaPermissions
@@ -105,6 +126,58 @@ Invalidates the cache written by `CachePersonaPermissions` as soon as a persona 
 - on `PersonaSwitched`, the cache of the previous persona is forgotten (re-activating the same persona keeps its fresh entry).
 
 In addition, when `register_listeners` is enabled, the cache of a persona is forgotten whenever the `Persona` model is updated (for example its `context`) or deleted.
+
+## Persona Switch Audit
+
+The package can record every persona switch in a database table: who switched, when, from which persona and to which persona. The audit is disabled by default; enable it in `config/multipersona.php`:
+
+```php
+'audit' => [
+    'enabled' => true,
+    'table' => 'persona_switch_logs',
+    'log_channel' => null,
+],
+```
+
+The `persona_switch_logs` table is created by the package migrations (run `php artisan migrate`; if you published the migrations before, publish them again). When the audit is enabled, the `RecordPersonaSwitch` listener is registered on `PersonaSwitched`, independently of `register_listeners`. It runs synchronously, writes one `PersonaSwitchLog` entry per switch and then dispatches `PersonaSwitchLogged`.
+
+Initial activations (when no persona was active before) do not dispatch `PersonaSwitched` and are therefore not recorded.
+
+| Column | Content |
+|--------|---------|
+| `user_id`, `user_type` | The user who switched (null when the event has no user) |
+| `from_persona_id`, `from_persona_name` | The previous persona |
+| `to_persona_id`, `to_persona_name` | The new persona |
+| `context` | The event context, for instance `{"method": "setActive"}` |
+| `switched_at` | The date of the switch |
+
+The persona names are stored with their IDs, so an entry stays readable after the persona has been renamed or deleted.
+
+Query the audit with the `PersonaSwitchLog` model:
+
+```php
+use Grazulex\LaravelMultiPersona\Models\PersonaSwitchLog;
+
+PersonaSwitchLog::query()->forUser($user)->latest('switched_at')->get();
+PersonaSwitchLog::query()->forPersona($persona)->get(); // switches from or to this persona
+
+$log->fromPersona; // Persona|null
+$log->toPersona;   // Persona|null
+$log->user;        // the configured user model
+
+// With the HasPersonas trait
+$user->personaSwitchLogs()->latest('switched_at')->get();
+```
+
+React to recorded switches with the `PersonaSwitchLogged` event:
+
+```php
+use Grazulex\LaravelMultiPersona\Events\PersonaSwitchLogged;
+
+Event::listen(function (PersonaSwitchLogged $event) {
+    // $event->getLog()->to_persona_name, $event->getLog()->switched_at, ...
+});
+```
 
 ## Creating Custom Listeners
 

@@ -514,6 +514,10 @@ $persona = $user->getPersonaByName('Admin');
 if ($user->hasPersona('Admin')) {
     // ...
 }
+
+// Recorded persona switches (requires 'audit' => ['enabled' => true],
+// see the Events Guide)
+$switches = $user->personaSwitchLogs()->latest('switched_at')->get();
 ```
 
 ## Next Steps

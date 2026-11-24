@@ -67,6 +67,10 @@ Two middleware classes for request handling:
 
 `Traits\BelongsToPersona` is a trait for application models. It registers the `Scopes\PersonaScope` global scope, which restricts Eloquent queries to the rows whose persona column (`scope.column`, `persona_id` by default) matches the active persona: its ID, or a value of its context when `scope.context_key` is set. New records get the column filled from the active persona. Without active persona, queries are not filtered unless `scope.strict` is enabled. See [Usage Guide](usage-guide.md#5-data-filtering-per-persona).
 
+### 8. Switch Audit
+
+`Listeners\RecordPersonaSwitch` (registered when `audit.enabled` is true) writes every `PersonaSwitched` event to the audit table through the `Models\PersonaSwitchLog` model, then dispatches `Events\PersonaSwitchLogged`. `Listeners\LogPersonaSwitch` can send its log entries to a dedicated channel with `audit.log_channel`. See [Events Guide](events-guide.md#persona-switch-audit).
+
 ## Data Flow
 
 ```
@@ -95,6 +99,27 @@ CREATE TABLE personas (
     updated_at TIMESTAMP NULL,
     INDEX idx_user_id_user_type (user_id, user_type),
     INDEX idx_user_id_is_active (user_id, is_active)
+);
+```
+
+### persona_switch_logs table
+
+Audit of the persona switches (name configurable with `audit.table`):
+
+```sql
+CREATE TABLE persona_switch_logs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    user_type VARCHAR(255) NULL,
+    from_persona_id BIGINT UNSIGNED NULL,
+    from_persona_name VARCHAR(255) NULL,
+    to_persona_id BIGINT UNSIGNED NULL,
+    to_persona_name VARCHAR(255) NOT NULL,
+    context JSON NULL,
+    switched_at TIMESTAMP NOT NULL,
+    INDEX idx_user_id_switched_at (user_id, switched_at),
+    INDEX idx_from_persona_id (from_persona_id),
+    INDEX idx_to_persona_id (to_persona_id)
 );
 ```
 
@@ -194,6 +219,7 @@ Configuration is stored in `config/multipersona.php`:
 - Middleware registration
 - Gate integration (`gate.enabled`, `gate.deny_unlisted`)
 - Persona data scope (`scope.column`, `scope.context_key`, `scope.strict`)
+- Switch audit (`audit.enabled`, `audit.table`, `audit.log_channel`)
 
 ## Migration Path
 

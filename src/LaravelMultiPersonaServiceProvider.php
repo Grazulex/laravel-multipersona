@@ -12,6 +12,7 @@ use Grazulex\LaravelMultiPersona\Events\PersonaSwitched;
 use Grazulex\LaravelMultiPersona\Listeners\CachePersonaPermissions;
 use Grazulex\LaravelMultiPersona\Listeners\ForgetPersonaPermissions;
 use Grazulex\LaravelMultiPersona\Listeners\LogPersonaSwitch;
+use Grazulex\LaravelMultiPersona\Listeners\RecordPersonaSwitch;
 use Grazulex\LaravelMultiPersona\Models\Persona;
 use Grazulex\LaravelMultiPersona\Services\PersonaManager;
 use Illuminate\Contracts\Auth\Access\Gate;
@@ -51,6 +52,7 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
 
         $this->registerMiddleware();
         $this->registerListeners();
+        $this->registerAudit();
         $this->registerHelpers();
         $this->registerGate();
     }
@@ -62,6 +64,15 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
         }
 
         PersonaGate::register($this->app->make(Gate::class));
+    }
+
+    private function registerAudit(): void
+    {
+        if (! config('multipersona.audit.enabled', false)) {
+            return;
+        }
+
+        Event::listen(PersonaSwitched::class, RecordPersonaSwitch::class);
     }
 
     private function registerListeners(): void

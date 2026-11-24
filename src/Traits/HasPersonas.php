@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Grazulex\LaravelMultiPersona\Traits;
 
 use Grazulex\LaravelMultiPersona\Models\Persona;
+use Grazulex\LaravelMultiPersona\Models\PersonaSwitchLog;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait HasPersonas
@@ -15,6 +16,15 @@ trait HasPersonas
     public function personas(): HasMany
     {
         return $this->hasMany(Persona::class, 'user_id');
+    }
+
+    /**
+     * Get the persona switches recorded for this user (requires the audit,
+     * see `multipersona.audit`)
+     */
+    public function personaSwitchLogs(): HasMany
+    {
+        return $this->hasMany(PersonaSwitchLog::class, 'user_id');
     }
 
     /**
