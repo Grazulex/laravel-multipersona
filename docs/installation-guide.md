@@ -137,6 +137,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Persona Switch Audit
+    |--------------------------------------------------------------------------
+    | When enabled, every persona switch (user, date, source and target
+    | persona) is recorded in the audit table and PersonaSwitchLogged is
+    | dispatched. log_channel is the log channel of LogPersonaSwitch
+    | (null = default channel).
+    */
+    'audit' => [
+        'enabled' => false,
+        'table' => 'persona_switch_logs',
+        'log_channel' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Configuration
     |--------------------------------------------------------------------------
     */

@@ -185,6 +185,11 @@ trait HasPersonas
      * Get all personas for this user
      */
     public function personas(): MorphMany
+
+    /**
+     * Get the persona switches recorded for this user (audit enabled)
+     */
+    public function personaSwitchLogs(): HasMany
     
     /**
      * Get the currently active persona (same result as PersonaManager::current()
@@ -380,6 +385,25 @@ class PersonaDeactivated
 }
 ```
 
+### PersonaSwitchLogged
+
+```php
+namespace Grazulex\LaravelMultiPersona\Events;
+
+class PersonaSwitchLogged
+{
+    public function __construct(
+        public readonly PersonaSwitchLog $log,
+        public readonly mixed $user = null
+    ) {}
+
+    public function getLog(): PersonaSwitchLog
+    public function getUser(): mixed
+}
+```
+
+Dispatched by `RecordPersonaSwitch` once a switch has been written to the audit table.
+
 ## Listeners
 
 ### LogPersonaSwitch
@@ -393,7 +417,21 @@ class LogPersonaSwitch implements ShouldQueue
 }
 ```
 
-Registered automatically on `PersonaSwitched` (see `register_listeners`).
+Registered automatically on `PersonaSwitched` (see `register_listeners`). Writes to the `audit.log_channel` log channel when it is set, otherwise to the default channel.
+
+### RecordPersonaSwitch
+
+```php
+namespace Grazulex\LaravelMultiPersona\Listeners;
+
+class RecordPersonaSwitch
+{
+    // Creates a PersonaSwitchLog entry, then dispatches PersonaSwitchLogged
+    public function handle(PersonaSwitched $event): void
+}
+```
+
+Runs synchronously and is registered on `PersonaSwitched` when `audit.enabled` is `true` (independently of `register_listeners`). See [Events Guide](events-guide.md#persona-switch-audit).
 
 ### CachePersonaPermissions
 
@@ -628,6 +666,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Persona Switch Audit
+    |--------------------------------------------------------------------------
+    */
+    // enabled: records every switch in the audit table (RecordPersonaSwitch)
+    // table: name of the audit table
+    // log_channel: log channel of LogPersonaSwitch (null = default channel)
+    'audit' => [
+        'enabled' => false,
+        'table' => 'persona_switch_logs',
+        'log_channel' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Auto-discovery Configuration
     |--------------------------------------------------------------------------
     */
@@ -702,12 +754,16 @@ class LaravelMultiPersonaServiceProvider extends ServiceProvider
         // Register the bundled listeners (unless register_listeners is false)
         $this->registerListeners();
 
+        // Register RecordPersonaSwitch (when audit.enabled is true)
+        $this->registerAudit();
+
         // Register the PersonaGate Gate::before callback (when gate.enabled is true)
         $this->registerGate();
     }
     
     private function registerMiddleware(): void
     private function registerListeners(): void
+    private function registerAudit(): void
     private function registerGate(): void
 }
 ```
@@ -728,6 +784,45 @@ Schema::create('personas', function (Blueprint $table) {
     $table->index(['user_id', 'user_type']);
     $table->index('is_active');
 });
+```
+
+### Persona Switch Logs Table Migration
+
+```php
+Schema::create(config('multipersona.audit.table', 'persona_switch_logs'), function (Blueprint $table) {
+    $table->id();
+    $table->unsignedBigInteger('user_id')->nullable();
+    $table->string('user_type')->nullable();
+    $table->unsignedBigInteger('from_persona_id')->nullable();
+    $table->string('from_persona_name')->nullable();
+    $table->unsignedBigInteger('to_persona_id')->nullable();
+    $table->string('to_persona_name');
+    $table->json('context')->nullable();
+    $table->timestamp('switched_at');
+
+    $table->index(['user_id', 'switched_at']);
+    $table->index('from_persona_id');
+    $table->index('to_persona_id');
+});
+```
+
+### PersonaSwitchLog Model
+
+```php
+namespace Grazulex\LaravelMultiPersona\Models;
+
+class PersonaSwitchLog extends Model
+{
+    public function fromPersona(): BelongsTo   // previous persona
+    public function toPersona(): BelongsTo     // new persona
+    public function user(): BelongsTo          // configured user model
+
+    // PersonaSwitchLog::forUser($user): switches of a user (model or key)
+    public function scopeForUser(Builder $query, Model|int|string $user): Builder
+
+    // PersonaSwitchLog::forPersona($persona): switches from or to a persona
+    public function scopeForPersona(Builder $query, Persona|int|string $persona): Builder
+}
 ```
 
 ## Facade

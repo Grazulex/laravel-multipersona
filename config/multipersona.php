@@ -130,4 +130,25 @@ return [
         'context_key' => null,
         'strict' => false,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Persona Switch Audit
+    |--------------------------------------------------------------------------
+    |
+    | When `enabled` is true, the RecordPersonaSwitch listener writes every
+    | PersonaSwitched event to the `table` audit table (user, date, source and
+    | target persona) and dispatches PersonaSwitchLogged afterwards. This
+    | setting does not depend on `register_listeners`.
+    |
+    | `log_channel` is the log channel used by the LogPersonaSwitch listener
+    | (for instance a dedicated 'audit' channel defined in config/logging.php).
+    | When null, the default log channel is used.
+    |
+    */
+    'audit' => [
+        'enabled' => false,
+        'table' => 'persona_switch_logs',
+        'log_channel' => null,
+    ],
 ];
