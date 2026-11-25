@@ -99,6 +99,11 @@ class PersonaGate
             ->where('is_active', true)
             ->first();
 
+        // A time-limited persona that reached its expiration grants nothing
+        if ($persona instanceof Persona && $persona->hasExpired()) {
+            return $this->manager->enforceExpiration($persona);
+        }
+
         return $persona;
     }
 }

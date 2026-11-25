@@ -30,6 +30,8 @@ php artisan vendor:publish --tag=multipersona-migrations
 php artisan migrate
 ```
 
+When you upgrade the package, run `php artisan migrate` again: new migrations may be added (for instance the `active_until` and `revert_to_persona_id` columns of the `personas` table, used by the [time-limited personas](usage-guide.md#6-time-limited-personas)). If you published the migrations, publish them again first.
+
 ### 4. Configure User Model
 
 Add the `HasPersonas` trait to your User model:
@@ -148,6 +150,18 @@ return [
         'enabled' => false,
         'table' => 'persona_switch_logs',
         'log_channel' => null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Time-limited Personas
+    |--------------------------------------------------------------------------
+    | Default lifetime, in seconds, of a persona activated for a limited
+    | time (switchToPersonaFor(), setActiveFor(), switchToFor()). Once it
+    | has elapsed, the persona that was active before is activated again.
+    */
+    'temporary' => [
+        'ttl' => 900,
     ],
 
     /*

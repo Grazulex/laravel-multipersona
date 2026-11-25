@@ -29,7 +29,7 @@ interface PersonaInterface
 The Eloquent model that implements `PersonaInterface`:
 
 - **Table**: `personas`
-- **Fields**: `id`, `name`, `context` (JSON), `is_active`, `user_id`, `user_type`, `timestamps`
+- **Fields**: `id`, `name`, `context` (JSON), `is_active`, `active_until`, `revert_to_persona_id`, `user_id`, `user_type`, `timestamps`
 - **Relationships**: `belongsTo` User
 
 ### 3. PersonaManager Service
@@ -71,6 +71,10 @@ Two middleware classes for request handling:
 
 `Listeners\RecordPersonaSwitch` (registered when `audit.enabled` is true) writes every `PersonaSwitched` event to the audit table through the `Models\PersonaSwitchLog` model, then dispatches `Events\PersonaSwitchLogged`. `Listeners\LogPersonaSwitch` can send its log entries to a dedicated channel with `audit.log_channel`. See [Events Guide](events-guide.md#persona-switch-audit).
 
+### 9. Time-limited Personas
+
+`PersonaManager::setActiveFor()`, `PersonaManager::switchToFor()` and `HasPersonas::switchToPersonaFor()` activate a persona until a date stored in `personas.active_until`; `personas.revert_to_persona_id` keeps the persona that was active before. The expiration is enforced lazily: every read of the active persona (`PersonaManager::current()`, `HasPersonas::activePersona()`, `PersonaGate`) goes through `PersonaManager::enforceExpiration()`, which deactivates an expired persona with a conditional update (so that concurrent requests release it only once), activates the original persona again and dispatches `Events\PersonaExpired` after the regular activation events. `PersonaManager::releaseExpired()` does the same for every user and can be scheduled. See [Usage Guide](usage-guide.md#6-time-limited-personas).
+
 ## Data Flow
 
 ```
@@ -97,10 +101,15 @@ CREATE TABLE personas (
     user_type VARCHAR(255) DEFAULT 'App\\Models\\User',
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
+    active_until TIMESTAMP NULL,
+    revert_to_persona_id BIGINT UNSIGNED NULL,
     INDEX idx_user_id_user_type (user_id, user_type),
-    INDEX idx_user_id_is_active (user_id, is_active)
+    INDEX idx_user_id_is_active (user_id, is_active),
+    INDEX idx_active_until (active_until)
 );
 ```
+
+`active_until` and `revert_to_persona_id` are added by a separate migration and are only set while a persona is active for a limited time.
 
 ### persona_switch_logs table
 
@@ -149,6 +158,7 @@ The `context` field stores JSON data that can include:
   - if the persona in the session is no longer active (another persona was activated elsewhere), the persona active for the same user is used and the session is updated;
   - if no persona is active anymore, the pointer is removed;
   - if the session holds no pointer, the active persona of the authenticated user is restored (for example after a new login).
+- A persona whose `active_until` date has been reached is never returned: it is deactivated on the first read and the persona referenced by `revert_to_persona_id` becomes the active one. This is also checked for a persona already resolved by the manager, so long-running processes apply the expiration too.
 - As a result, `PersonaManager::current()` and `HasPersonas::activePersona()` always agree.
 - Persona data is lazy-loaded from database when needed
 
@@ -159,6 +169,7 @@ The `context` field stores JSON data that can include:
 3. **Session Security**: Standard Laravel session security applies
 4. **Database**: Use proper indexes for performance
 5. **Data filtering**: `BelongsToPersona` does not filter queries when no persona is active unless `scope.strict` is enabled; it only covers Eloquent queries, not `DB::table()`
+6. **High-privilege personas**: activate them for a limited time (`switchToPersonaFor()`) so that they do not stay active until the user leaves them. Code that reads the `is_active` column directly does not apply the expiration: use `persona()` / `activePersona()`, or schedule `PersonaManager::releaseExpired()`
 
 ## Extension Points
 
@@ -220,6 +231,7 @@ Configuration is stored in `config/multipersona.php`:
 - Gate integration (`gate.enabled`, `gate.deny_unlisted`)
 - Persona data scope (`scope.column`, `scope.context_key`, `scope.strict`)
 - Switch audit (`audit.enabled`, `audit.table`, `audit.log_channel`)
+- Time-limited personas (`temporary.ttl`)
 
 ## Migration Path
 

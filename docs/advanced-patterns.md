@@ -216,6 +216,22 @@ class Persona extends Model implements PersonaInterface
 
 ## Pattern 3: Time-Based Personas
 
+### Built-in Time-limited Switch
+
+To give a user an existing persona for a limited time and return to the previous persona automatically, use the built-in switch (see [Usage Guide](usage-guide.md#6-time-limited-personas)):
+
+```php
+// Admin for 15 minutes, then back to the persona that was active before
+$user->switchToPersonaFor($adminPersona, 900);
+
+// React to the automatic return
+Event::listen(function (PersonaExpired $event) {
+    // $event->getPersona(), $event->getRestoredPersona()
+});
+```
+
+The implementation below is a different pattern: it creates a dedicated persona that only exists for the duration of the access.
+
 ### Temporary Access Implementation
 
 ```php

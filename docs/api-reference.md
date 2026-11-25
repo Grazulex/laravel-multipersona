@@ -90,8 +90,16 @@ class Persona extends Model implements PersonaInterface
     public function canAccess(string $resource, array $context = []): bool
     public function getUser(): ?Model
     public function isActive(): bool
-    public function activate(): self   // sets is_active and deactivates the user's other personas
+    public function activate(): self   // sets is_active, without time limit, and deactivates the user's other personas
     public function deactivate(): self // clears is_active
+
+    // Time-limited activation
+    public function activateUntil(DateTimeInterface $expiresAt, int|string|null $revertToPersonaId = null): self
+    public function expiresAt(): ?CarbonInterface       // null without time limit
+    public function isTemporary(): bool                 // active with a time limit
+    public function hasExpired(): bool                  // time limit reached
+    public function getRevertPersonaId(): int|string|null // persona activated again at the expiration
+    public function supportsExpiration(): bool          // the table has the expiration columns
     
     // Additional methods
     public function getSummary(): array
@@ -134,6 +142,41 @@ class PersonaManager
      * Deactivates it in the database and removes the session pointer.
      */
     public function clear(): void
+
+    /**
+     * Set the active persona for a limited time. $ttl is a number of
+     * seconds, a DateInterval or the date of the expiration (null =
+     * config temporary.ttl). At the expiration, the persona that was
+     * active before is activated again.
+     */
+    public function setActiveFor(PersonaInterface|int|string $persona, DateTimeInterface|DateInterval|int|null $ttl = null): self
+
+    /**
+     * Same as setActiveFor(), only when the persona belongs to the user
+     */
+    public function switchToFor(PersonaInterface|int|string $persona, DateTimeInterface|DateInterval|int|null $ttl = null, ?Model $user = null): bool
+
+    /**
+     * Check if the current persona is active for a limited time
+     */
+    public function isTemporary(): bool
+
+    /**
+     * Expiration of the current persona (null without time limit)
+     */
+    public function expiresAt(): ?CarbonInterface
+
+    /**
+     * Release the given persona when it has expired (restores the original
+     * persona and dispatches the events) and return the persona active for
+     * its user afterwards
+     */
+    public function enforceExpiration(Persona $persona): ?Persona
+
+    /**
+     * Release the expired personas of every user; returns their number
+     */
+    public function releaseExpired(): int
     
     /**
      * Check if there's an active persona
@@ -211,6 +254,13 @@ trait HasPersonas
      * Switch to a specific persona
      */
     public function switchToPersona(PersonaInterface $persona): void
+
+    /**
+     * Switch to a specific persona for a limited time ($ttl: seconds,
+     * DateInterval or date; null = config temporary.ttl). Returns false
+     * when the persona is not one of the user's personas.
+     */
+    public function switchToPersonaFor(Persona|int|string $persona, DateTimeInterface|DateInterval|int|null $ttl = null): bool
     
     /**
      * Get persona by name
@@ -403,6 +453,29 @@ class PersonaSwitchLogged
 ```
 
 Dispatched by `RecordPersonaSwitch` once a switch has been written to the audit table.
+
+### PersonaExpired
+
+```php
+namespace Grazulex\LaravelMultiPersona\Events;
+
+class PersonaExpired
+{
+    public function __construct(
+        public readonly PersonaInterface $persona,
+        public readonly ?PersonaInterface $restoredPersona = null,
+        public readonly mixed $user = null,
+        public readonly array $context = []
+    ) {}
+
+    public function getPersona(): PersonaInterface          // expired persona
+    public function getRestoredPersona(): ?PersonaInterface // original persona, active again
+    public function getUser(): mixed
+    public function getContext(): array
+}
+```
+
+Dispatched when a time-limited persona has expired, after the events of the return to the original persona. See [Events Guide](events-guide.md#5-personaexpired).
 
 ## Listeners
 
@@ -680,6 +753,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Time-limited Personas
+    |--------------------------------------------------------------------------
+    */
+    // ttl: default lifetime, in seconds, of a persona activated with
+    // setActiveFor(), switchToFor() or switchToPersonaFor()
+    'temporary' => [
+        'ttl' => 900,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Auto-discovery Configuration
     |--------------------------------------------------------------------------
     */
@@ -783,6 +867,15 @@ Schema::create('personas', function (Blueprint $table) {
     
     $table->index(['user_id', 'user_type']);
     $table->index('is_active');
+});
+```
+
+### Personas Expiration Migration
+
+```php
+Schema::table(config('multipersona.table_name', 'personas'), function (Blueprint $table) {
+    $table->timestamp('active_until')->nullable()->index(); // expiration of a time-limited activation
+    $table->unsignedBigInteger('revert_to_persona_id')->nullable(); // persona activated again afterwards
 });
 ```
 

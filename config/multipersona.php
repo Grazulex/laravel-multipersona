@@ -151,4 +151,21 @@ return [
         'table' => 'persona_switch_logs',
         'log_channel' => null,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Time-limited Personas
+    |--------------------------------------------------------------------------
+    |
+    | `ttl` is the default lifetime, in seconds, of a persona activated with
+    | PersonaManager::setActiveFor(), PersonaManager::switchToFor() or
+    | HasPersonas::switchToPersonaFor() when no duration is given. Once it
+    | has elapsed, the persona is deactivated and the persona that was
+    | active before the switch is activated again. Personas activated with
+    | setActive(), switchTo() or switchToPersona() never expire.
+    |
+    */
+    'temporary' => [
+        'ttl' => 900,
+    ],
 ];

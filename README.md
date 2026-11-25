@@ -84,6 +84,7 @@ The active persona is stored in the database (`is_active` column), the single so
 - **Listeners**: registered automatically: `LogPersonaSwitch`, `CachePersonaPermissions` (permissions cache) and `ForgetPersonaPermissions` (cache invalidation when the persona changes). Disable with `'register_listeners' => false` (see [Events Guide](docs/events-guide.md#provided-listeners))
 - **Switch audit** (opt-in): with `'audit' => ['enabled' => true]`, every persona switch (user, date, source and target persona) is recorded in the `persona_switch_logs` table through the `PersonaSwitchLog` model, and a `PersonaSwitchLogged` event is dispatched; `'log_channel'` sends the `LogPersonaSwitch` entries to a dedicated log channel (see [Events Guide](docs/events-guide.md#persona-switch-audit))
 - **Gate integration** (opt-in): with `'gate' => ['enabled' => true]`, `$user->can()`, `Gate::allows()` and `@can` grant the abilities listed in the `permissions` of the active persona; `'deny_unlisted' => true` also denies the other abilities while that persona is active (see [Usage Guide](docs/usage-guide.md#4-gate-integration))
+- **Time-limited personas**: `$user->switchToPersonaFor($persona, 600)` activates a persona for a limited time; once it has expired, the persona that was active before is activated again and a `PersonaExpired` event is dispatched (see [Usage Guide](docs/usage-guide.md#6-time-limited-personas))
 - **Service**: `PersonaManager` for programmatic access
 - **Contract**: `PersonaInterface` for custom implementations
 
@@ -174,6 +175,25 @@ Invoice::forPersona($companyA)->get();      // another persona
 ```
 
 Without overrides, the trait compares the `persona_id` column with the ID of the active persona. The column, the context key and the behaviour without active persona are set in the `scope` section of `config/multipersona.php`. When no persona is active, queries are **not filtered** by default: set `'scope' => ['strict' => true]` to return no row instead, or protect the routes with the `EnsureActivePersona` middleware.
+
+### Time-limited Persona
+```php
+// The user works as "Standard User" and needs the admin persona for 10 minutes
+$user->switchToPersona($standard);
+$user->switchToPersonaFor($admin, 600);          // seconds, DateInterval or date
+
+persona()->getName();                            // "Admin"
+app('multipersona')->expiresAt();                // Carbon instance, 10 minutes from now
+
+// 10 minutes later, on the next request
+persona()->getName();                            // "Standard User"
+```
+
+Without duration, `'temporary' => ['ttl' => 900]` (seconds) of `config/multipersona.php` is used. The expiration is stored in the `personas` table (run `php artisan migrate` after upgrading) and applied whenever the active persona is read. To also release the personas of users who make no request, schedule `PersonaManager::releaseExpired()`:
+
+```php
+Schedule::call(fn () => app('multipersona')->releaseExpired())->everyMinute();
+```
 
 ### Middleware Protection
 ```php

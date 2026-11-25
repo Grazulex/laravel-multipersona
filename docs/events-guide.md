@@ -61,6 +61,35 @@ $event->getLog();         // The PersonaSwitchLog entry that was recorded
 $event->getUser();        // The user
 ```
 
+### 5. PersonaExpired
+
+Triggered when a [time-limited persona](usage-guide.md#6-time-limited-personas) has reached its expiration and has been deactivated.
+
+```php
+use Grazulex\LaravelMultiPersona\Events\PersonaExpired;
+
+// The event contains:
+$event->getPersona();          // The persona that expired
+$event->getRestoredPersona();  // The original persona, active again (can be null)
+$event->getUser();             // The owner of the persona
+$event->getContext();          // ['method' => 'expire']
+```
+
+The return to the original persona also dispatches the regular events, with the context `['method' => 'expire']`, before `PersonaExpired`: `PersonaActivated` and `PersonaSwitched` for the restored persona, or `PersonaDeactivated` for the expired persona when there is no persona to return to. The bundled listeners and the audit therefore handle an expiration like any other switch.
+
+The expiration is applied when the active persona is read, or by `PersonaManager::releaseExpired()`, so the events may be dispatched by another request or by the scheduler rather than by the user. `getUser()` is the authenticated user when the persona is theirs, otherwise the owner loaded with the configured `user_model` (null when it cannot be loaded).
+
+A temporary switch itself dispatches `PersonaActivated` (and `PersonaSwitched`) with the context `['method' => 'setActiveFor', 'expires_at' => '<ISO 8601 date>']`.
+
+```php
+Event::listen(function (PersonaExpired $event) {
+    Log::info('Temporary persona expired', [
+        'persona' => $event->getPersona()->getName(),
+        'restored' => $event->getRestoredPersona()?->getName(),
+    ]);
+});
+```
+
 ## Provided Listeners
 
 The service provider registers the bundled listeners automatically:
@@ -148,7 +177,7 @@ Initial activations (when no persona was active before) do not dispatch `Persona
 | `user_id`, `user_type` | The user who switched (null when the event has no user) |
 | `from_persona_id`, `from_persona_name` | The previous persona |
 | `to_persona_id`, `to_persona_name` | The new persona |
-| `context` | The event context, for instance `{"method": "setActive"}` |
+| `context` | The event context, for instance `{"method": "setActive"}`; `{"method": "setActiveFor", "expires_at": "..."}` for a time-limited switch and `{"method": "expire"}` for the automatic return to the original persona |
 | `switched_at` | The date of the switch |
 
 The persona names are stored with their IDs, so an entry stays readable after the persona has been renamed or deleted.

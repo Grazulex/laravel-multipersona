@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Grazulex\LaravelMultiPersona\Traits;
 
+use DateInterval;
+use DateTimeInterface;
 use Grazulex\LaravelMultiPersona\Models\Persona;
 use Grazulex\LaravelMultiPersona\Models\PersonaSwitchLog;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,7 +35,15 @@ trait HasPersonas
      */
     public function activePersona(): ?Persona
     {
-        return $this->personas()->where('is_active', true)->first();
+        $persona = $this->personas()->where('is_active', true)->first();
+
+        // A time-limited persona that reached its expiration is released
+        // and the original persona is returned instead
+        if ($persona instanceof Persona && $persona->hasExpired()) {
+            return app('multipersona')->enforceExpiration($persona);
+        }
+
+        return $persona;
     }
 
     /**
@@ -64,6 +74,29 @@ trait HasPersonas
         // Persists the activation (deactivating the other personas of this
         // user) and points the session at the selected persona
         app('multipersona')->setActive($persona);
+
+        return true;
+    }
+
+    /**
+     * Switch to a specific persona for a limited time.
+     *
+     * `$ttl` is a number of seconds, a DateInterval or the date of the
+     * expiration; when null, `multipersona.temporary.ttl` is used. Once the
+     * expiration is reached, the persona that was active before the switch
+     * is activated again.
+     */
+    public function switchToPersonaFor(Persona|int|string $persona, DateTimeInterface|DateInterval|int|null $ttl = null): bool
+    {
+        if (is_scalar($persona)) {
+            $persona = $this->personas()->find($persona);
+        }
+
+        if (! $persona instanceof Persona) {
+            return false;
+        }
+
+        app('multipersona')->setActiveFor($persona, $ttl);
 
         return true;
     }
