@@ -190,6 +190,74 @@ Document::forPersona(42)->get();          // rows whose column equals 42
 
 `withoutGlobalScope(PersonaScope::class)` works as well. The `persona()` relationship of the trait is only meaningful when the column holds the persona ID (no `context_key`).
 
+### 6. Time-limited Personas
+
+A persona activated with `switchToPersona()` stays active until the user leaves it. For a high-privilege persona, use a switch that expires: once the delay has elapsed, the persona is deactivated and the persona that was active before the switch is activated again.
+
+```php
+$user->switchToPersona($standard);
+
+// Admin for 10 minutes, then back to $standard
+$user->switchToPersonaFor($admin, 600);
+
+// The duration can also be a DateInterval or the date of the expiration
+$user->switchToPersonaFor($admin, new DateInterval('PT30M'));
+$user->switchToPersonaFor($admin, now()->endOfDay());
+
+// Without duration, the configured default is used
+$user->switchToPersonaFor($admin);
+```
+
+The same switch is available on the `PersonaManager`:
+
+```php
+$manager = app('multipersona');
+
+$manager->setActiveFor($admin, 600);          // no ownership check, like setActive()
+$manager->switchToFor($admin, 600);           // false when the persona is not the user's, like switchTo()
+
+$manager->isTemporary();                      // true
+$manager->expiresAt();                        // Carbon instance, or null without time limit
+now()->diffInSeconds($manager->expiresAt());  // remaining time, for instance for a countdown
+```
+
+#### Configuration
+
+```php
+// config/multipersona.php
+'temporary' => [
+    'ttl' => 900, // default lifetime in seconds
+],
+```
+
+The expiration is stored in two columns of the `personas` table, `active_until` and `revert_to_persona_id`, added by the package migrations: run `php artisan migrate` after upgrading (if you published the migrations before, publish them again). Without these columns the regular switches keep working and a time-limited switch throws a `LogicException`.
+
+#### How the expiration is applied
+
+The expiration is checked every time the active persona is read: `persona()`, `PersonaManager::current()`, `$user->activePersona()`, the middleware, the Gate integration and the `BelongsToPersona` scope never return an expired persona. The first read after the expiration:
+
+1. deactivates the expired persona;
+2. activates the original persona again, when it still exists and belongs to the same user (otherwise no persona is active);
+3. dispatches `PersonaActivated` and `PersonaSwitched` for the restored persona (or `PersonaDeactivated` when there is none) with the context `['method' => 'expire']`, then `PersonaExpired`. The return is therefore recorded by the [switch audit](events-guide.md#persona-switch-audit) like any other switch.
+
+A user who makes no request keeps the `is_active` flag on the expired persona until the next read. To release these personas as well (for instance when you query `is_active` yourself), schedule `releaseExpired()`, which handles every user and returns the number of personas released:
+
+```php
+// routes/console.php
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::call(fn () => app('multipersona')->releaseExpired())->everyMinute();
+```
+
+#### Rules
+
+- A regular switch (`switchToPersona()`, `setActive()`, `switchTo()`) never expires. Switching to another persona during a temporary switch cancels the return; a regular switch to the temporary persona itself removes its time limit.
+- `clear()` deactivates the temporary persona without returning to the original one.
+- A temporary switch made during another temporary switch returns to the persona that was active before the first one, not to the intermediate persona.
+- Calling `switchToPersonaFor()` again for the persona that is already temporarily active moves its expiration (a way to extend or shorten it).
+- A temporary switch made when no other persona is active leaves the user without active persona after the expiration.
+- The expiration must be in the future, otherwise an `InvalidArgumentException` is thrown.
+
 ## Advanced Usage Examples
 
 ### 1. Multi-tenant System
@@ -506,6 +574,9 @@ if ($user->hasActivePersona()) {
 
 // Switch to a persona
 $user->switchToPersona($persona);
+
+// Switch to a persona for 10 minutes, then return to the previous one
+$user->switchToPersonaFor($persona, 600);
 
 // Get persona by name
 $persona = $user->getPersonaByName('Admin');
